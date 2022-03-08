@@ -1,0 +1,25 @@
+engines:
+  checkstyle:
+    enabled: true
+    checks:
+      com.puppycrawl.tools.checkstyle.checks.naming.PackageNameCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck:
+        enabled: false
+      squid:S106:
+        enabled: false
+exclude_patterns:
+- "archive/"
+- "config/"
+- "db/"
+- "dist/"
+- "features/"
+- "**/node_modules/"
+- "script/"
+- "**/spec/"
+- "**/test/"
+- "**/tests/"
+- "Tests/"
+- "**/vendor/"
+- "**/*_test.go"
+- "**/*.d.ts"
