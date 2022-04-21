@@ -68,11 +68,9 @@ class NeuralNetworkPyspark():
     def activation(self, x, f):
         return f(x)
 
-    # Sigmoid Activation function
     def sigmoid(self, X):
         return 1 / (1 + np.exp(-X))
 
-    # Sigmoid prime function (used for backward prop)
     def sigmoid_prime(self, X):
         sig = self.sigmoid(X)
         return sig * (1 - sig)
@@ -92,16 +90,91 @@ class NeuralNetworkPyspark():
         return (s > 0).astype(int)
     
     '''Forward Pass functions'''
-    # Compute the layer propagation before activation
+    def forward_pass(self, X):
+        if self.act_func=='tanh':
+            act = self.tanh
+        elif self.act_func == 'sig':
+            act = self.sigmoid
+        else:
+            act = self.relu
+        i = 0
+        forward = X
+        for W in self.Ws[:-1]:
+            forward = forward.map(
+                lambda x: (
+                    x[:i], 
+                    self.activation(self.preforward(x[i], W[1:, :], W[0:1, :]), act), 
+                    x[i+1]
+                )
+            )
+            i += 1
+        forward = forward.map(
+            lambda x: (
+                x[:i], 
+                self.preforward(x[i], W[1:, :], W[0:1, :] ), 
+                x[i+1]
+            )
+        )
+        return forward
+
+    # Compute the layer propagation without activation
     def preforward(self, X, w, b):
         return np.dot(X, w) + b
+    
+    '''Delete predict?'''
+    # # Compute the layer propagation after activation
+    # # This is also equivalent to a predict function once model is trained
+    # def predict(self, x, W1, B1, W2, B2):
+    #     return self.activation(self.preforward(self.activation(self.preforward(x , W1, B1)), W2, B2))
 
-    # Compute the layer propagation after activation
-    # This is also equivalent to a predict function once model is trained
-    def predict(self, x, W1, B1, W2, B2):
-        return self.activation(self.preforward(self.activation(self.preforward(x , W1, B1)), W2, B2))
+    '''Backward propogation functions'''
+    def backward_rdd(self, X, T):
+        '''Assumes forward_pass just called with layer outputs in the rdd'''
+        # error = T - self.Ys[-1]
+        # n_samples = X.shape[0]
+        # n_outputs = T.shape[1]
+        # delta = - error / (n_samples * n_outputs)
+        # n_layers = len(self.n_hiddens_per_layer) + 1
+        # # Step backwards through the layers to back-propagate the error (delta)
+        # for layeri in range(n_layers - 1, -1, -1):
+        #     # gradient of all but bias weights
+        #     self.dE_dWs[layeri][1:, :] = self.Ys[layeri].T @ delta
+        #     # gradient of just the bias weights
+        #     self.dE_dWs[layeri][0:1, :] = np.sum(delta, 0)
+        #     # Back-propagate this layer's delta to previous layer
+        #     if self.activation_function == 'relu':
+        #         delta = delta @ self.Ws[layeri][1:, :].T * self.grad_relu(self.Ys[layeri])
+        #     else:
+        #         delta = delta @ self.Ws[layeri][1:, :].T * (1 - self.Ys[layeri] ** 2)
 
-    '''Backward propogation function'''
+        if self.act_func=='tanh':
+            der = self.tanh_prime
+        elif self.act_func == 'sig':
+            der = self.sigmoid_prime
+        else:
+            der = self.relu_prime
+        n_layers = len(self.n_hiddens_per_layer) + 1
+        i = len(self.n_hiddens_per_layer) + 1
+        # Compute the error from the output layer
+        ### Update with actual mapped values
+        backward = X.map(
+            lambda x: (
+                x[:i], 
+                self.sse(x[i+2], x[i+3]), 
+                self.derivativeB2(x[4], x[5], x[3], der), 
+                self.mse(x[4], x[5])
+            )
+        )
+        # Step backwards through the layers to back-propagate the error
+        ### Update with correct delta, weights, and derivations
+        ### Also update with correct x[] values
+        for layeri in range(n_layers - 1, -1, -1):
+            backward = backward.map(lambda x: (x[0], x[1], x[3], x[4], self.derivativeWeights(x[2], x[4]) ,x[5]))\
+                .map(lambda x: (x[0], x[2], x[3], x[4], self.derivativeBias1(x[1],  x[3], self.Ws[layeri], der) ,x[5]))
+            i -= 1
+        backward = backward.map(lambda x: (x[1], x[2], x[3], x[4], self.derivativeWeights(x[0], x[4]) ,x[5], 1))
+        return backward
+
     # Compute the derivative of the error regarding B1
     def derivativeBias1(self, h_h, dB, W, f_prime):
         return np.dot(dB, W.T) * f_prime(h_h)
@@ -130,16 +203,6 @@ class NeuralNetworkPyspark():
 
     '''Training functions'''
     def train(self, train_rdd, num_epochs=50, learning_rate=0.1, verbose=True):
-        if self.act_func=='tanh':
-            act = self.tanh
-            der = self.tanh_prime
-        elif self.act_func == 'sig':
-            act = self.sigmoid
-            der = self.sigmoid_prime
-        else:
-            act = self.relu
-            der = self.relu_prime
-
         # History over epochs
         cost_history = []
         acc_history = []
@@ -150,45 +213,11 @@ class NeuralNetworkPyspark():
         for epoch in range(num_epochs):
             
             # Compute gradients, cost and accuracy over mini batch 
+            forward_rdd = self.forward_pass(train_rdd.sample(False,0.7))
+            backward_rdd = self.backward_rdd(forward_rdd)
             
-            ################## Notations ######################
-            # x -> Input Image flatten of shape (1, 784)
-
-            # y* -> One hot label of shape # need to eliminate this
-            
-            # h^ -> Forward prop from Input layer to hidden layer before activation using W1, B1 parm
-            # h -> Forward prop from Input layer to hidden layer after tanh activation 
-            # y^ -> Forward prop from hidden layer to output layer before activation using W2, B2 parm
-            # y -> Forward prop from hidden layer to output layer after sigmoid activation 
-            # E -> Error between y and y* using SSE
-            # Acc -> 1 is right prediction 0 otherwise
-            # DE/D? -> Partial derivative of the Error regarding parmaters (B2, W2, B1, W1)
-            
-            
-            ################# Forward Prop ######################
-            # map batch ([x], [y*]) to ([x], [h^],[y*])
-            # map batch ([x], [h^],[y*]) to ([x], [h^], [h], [y*])
-            # map batch ([x], [h^], [h], [y*]) to ([x], [h^], [h], [y^], [y*])
-            # map batch ([x], [h^], [h], [y^], [y*]) to ([x], [h^], [h], [y^], [y], [y*])
-            ################# Backward Prop #####################
-            # map batch ([x], [h^], [h], [y^], [y], [y*]) to ([x], [h^], [h], [E], [DE/DB2], [Acc])
-            # map batch ([x], [h^], [h], [E], [DE/DB2], [Acc]) to ([x], [h^], [E], [DE/DB2], [DE/DW2], [Acc])
-            # map batch ([x], [h^], [E], [DE/DB2], [DE/DW2], [Acc]) to ([x], [E], [DE/DB2], [DE/DW2], [DE/DB1], [Acc])
-            # map batch ([x], [E], [DE/DB2], [DE/DW2], [DE/DB1], [Acc]) to ([E], [DE/DB2], [DE/DW2], [DE/DB1], [DE/DW1],[Acc])
-            ############### Reduce over the mini batch #########
-
-
-            gradientCostAcc = train_rdd\
-                                .sample(False,0.7)\
-                                .map(lambda x: (x[0], self.preforward(x[0], self.Ws[0][1:, :], self.Ws[0][0:1, :] ), x[1]))\
-                                .map(lambda x: (x[0], x[1], self.activation(x[1], act), x[2]))\
-                                .map(lambda x: (x[0], x[1], x[2], self.preforward(x[2], self.Ws[1][1:, :], self.Ws[1][0:1, :]), x[3]))\
-                                .map(lambda x: (x[0], x[1], x[2], x[3], self.activation(x[3], act), x[4]))\
-                                .map(lambda x: (x[0], x[1], x[2], self.mse(x[4], x[5]), self.derivativeB2(x[4], x[5], x[3], der), int(np.argmax(x[4]) == np.argmax(x[5]))))\
-                                .map(lambda x: (x[0], x[1], x[3], x[4], self.derivativeW2(x[2], x[4]) ,x[5]))\
-                                .map(lambda x: (x[0], x[2], x[3], x[4], self.derivativeB1(x[1],  x[3], W2, der) ,x[5]))\
-                                .map(lambda x: (x[1], x[2], x[3], x[4], self.derivativeW1(x[0], x[4]) ,x[5], 1)) \
-                                .reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3], x[4] + y[4], x[5] + y[5], x[6] + y[6]))
+            # This needs to be generalized to the size of the network
+            gradientCostAcc = backward_rdd.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3], x[4] + y[4], x[5] + y[5], x[6] + y[6]))
 
             # Cost and Accuarcy of the mini batch
             n = gradientCostAcc[-1] # number of images in the mini batch
@@ -200,16 +229,10 @@ class NeuralNetworkPyspark():
             acc_history.append(acc)
             
             # Extract gradiends
-            DB2 = gradientCostAcc[1]/n
-            DW2 = gradientCostAcc[2]/n
-            DB1 = gradientCostAcc[3]/n
-            DW1 = gradientCostAcc[4]/n
+            ### self.all_gradients #???
                     
             # Update parameter with new learning rate and gradients using Gradient Descent
-            B2 -= learning_rate * DB2
-            W2 -= learning_rate * DW2
-            B1 -= learning_rate * DB1
-            W1 -= learning_rate * DW1
+            ### self.all_weights #???
 
             # Display performances
             if verbose:
