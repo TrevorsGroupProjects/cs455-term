@@ -66,7 +66,7 @@ class NeuralNetworkPyspark():
     # Compute the layer propagation after activation
     # This is also equivalent to a predict function once model is trained
     def predict(self, x, W1, B1, W2, B2):
-        return self.sigmoid(self.preforward(self.sigmoid(self.preforward(x , W1, B1)), W2, B2))
+        return self.activation(self.preforward(self.activation(self.preforward(x , W1, B1)), W2, B2))
 
     '''Backward propogation function'''
     # Compute the derivative of the error regarding B2
@@ -162,8 +162,8 @@ class NeuralNetworkPyspark():
                                 .map(lambda x: (x[0], x[1], x[2], self.preforward(x[2], W2, B2), x[3]))\
                                 .map(lambda x: (x[0], x[1], x[2], x[3], self.activation(x[3], act), x[4]))\
                                 .map(lambda x: (x[0], x[1], x[2], self.sse(x[4], x[5]), self.derivativeB2(x[4], x[5], x[3], der), int(np.argmax(x[4]) == np.argmax(x[5]))))\
-                                .map(lambda x: (x[0], x[1], x[3], x[4],  self.derivativeW2(x[2], x[4]) ,x[5]))\
-                                .map(lambda x: (x[0], x[2], x[3], x[4],  self.derivativeB1(x[1],  x[3], W2, der) ,x[5]))\
+                                .map(lambda x: (x[0], x[1], x[3], x[4], self.derivativeW2(x[2], x[4]) ,x[5]))\
+                                .map(lambda x: (x[0], x[2], x[3], x[4], self.derivativeB1(x[1],  x[3], W2, der) ,x[5]))\
                                 .map(lambda x: (x[1], x[2], x[3], x[4], self.derivativeW1(x[0], x[4]) ,x[5], 1)) \
                                 .reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3], x[4] + y[4], x[5] + y[5], x[6] + y[6]))
 
