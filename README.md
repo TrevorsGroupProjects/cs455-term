@@ -7,3 +7,4 @@ People and communities that live in areas of social vulnerability tend to be dis
 - Private Schools in U.S counties
 - Social Vulnerability Index of U.S. Counties
 - Graduation Rates of U.S. Counties
+- ACS Youth School and Work Activity Variables - Boundaries
