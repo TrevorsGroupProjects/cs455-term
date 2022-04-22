@@ -3,7 +3,7 @@ import sys
 import tempfile
 import shutil
 
-
+import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 
 
@@ -80,8 +80,12 @@ if __name__ == "__main__":
     
     #Add a new column for the county and state postal abbrev
     #df["County-State"] = df["County"] + state_by_state_postal_codes[df["State"]]
-    df.withColumn("County-State", df.County + "-" + state_by_state_postal_codes(df.State))
-    df.head()
+    from itertools import chain    
+
+    mapping_expr = F.create_map([F.lit(x) for x in chain(*state_by_state_postal_codes.items())])
     
+    df = df.withColumn("County-State", F.concat_ws("-", F.trim(F.col("County")), mapping_expr.getItem(F.col("State"))))
+    df.show()
+     
 
     spark.stop()
