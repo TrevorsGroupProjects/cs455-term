@@ -17,7 +17,7 @@ class NeuralNetworkPyspark():
         self.input_layer = n_inputs # number of neurons in the input layer
         self.hidden_layer = n_hiddens_per_layer # list of number of neurons in each of the hidden layers
         self.output_layer = n_outputs # number of neurons in the output layer
-        self.act_func = activation_function #activation function
+        self.act_func = activation_function # activation function
 
         # Set self.n_hiddens_per_layer to [] if argument is 0, [], or [0]
         if n_hiddens_per_layer == 0 or n_hiddens_per_layer == [] or n_hiddens_per_layer == [0]:
@@ -135,25 +135,8 @@ class NeuralNetworkPyspark():
     #     return self.activation(self.preforward(self.activation(self.preforward(x , W1, B1)), W2, B2))
 
     '''Backward propogation functions'''
-    def backward_pass(self, X, T):
+    def backward_pass(self, X):
         '''Assumes forward_pass just called with layer outputs in the rdd'''
-        # error = T - self.Ys[-1]
-        # n_samples = X.shape[0]
-        # n_outputs = T.shape[1]
-        # delta = - error / (n_samples * n_outputs)
-        # n_layers = len(self.n_hiddens_per_layer) + 1
-        # # Step backwards through the layers to back-propagate the error (delta)
-        # for layeri in range(n_layers - 1, -1, -1):
-        #     # gradient of all but bias weights
-        #     self.dE_dWs[layeri][1:, :] = self.Ys[layeri].T @ delta
-        #     # gradient of just the bias weights
-        #     self.dE_dWs[layeri][0:1, :] = np.sum(delta, 0)
-        #     # Back-propagate this layer's delta to previous layer
-        #     if self.activation_function == 'relu':
-        #         delta = delta @ self.Ws[layeri][1:, :].T * self.grad_relu(self.Ys[layeri])
-        #     else:
-        #         delta = delta @ self.Ws[layeri][1:, :].T * (1 - self.Ys[layeri] ** 2)
-
         if self.act_func=='tanh':
             der = self.tanh_prime
         elif self.act_func == 'sig':
@@ -161,38 +144,35 @@ class NeuralNetworkPyspark():
         else:
             der = self.relu_prime
         n_layers = 2 * (len(self.n_hiddens_per_layer) + 1)
-        i = 2 * (len(self.n_hiddens_per_layer)  + 1)
         # Compute the error from the output layer
         # map the cost to the output -1 position,
         # the derivative of the output bias to the output position,
         # and map the mean square error to the output +1 position
         backward = X.map(
             lambda x: (
-                x[:i-1], 
-                self.sse(x[i], x[i+1]), 
-                self.derivativeBias2(x[i], x[i+1], x[i-1], der), 
-                self.mse(x[i], x[i+1])
+                x[:n_layers-1], 
+                self.sse(x[n_layers], x[n_layers+1]), 
+                self.derivativeBias2(x[n_layers], x[n_layers+1], x[n_layers-1], der), 
+                self.mse(x[n_layers], x[n_layers+1])
             )
         )
-        # Step backwards through the layers to back-propagate the error
-        ### Update with correct delta, weights, and derivations
-        ### Also update with correct x[] values
-        for layeri in range(n_layers - 1, -1, -1):
+        # Step backwards through the layers to compute the gradient derivatives
+        for layeri in range(n_layers - 2, 1, -2):
             backward = backward.map(
-                lambda x: (x[0], x[1], x[3], x[4], self.derivativeWeights(x[2], x[4]) ,x[5])
+                lambda x: (x[:layeri], self.derivativeWeights(x[layeri-1], x[-2]) ,x[-1])
             )\
             .map(
-                lambda x: (x[0], x[2], x[3], x[4], self.derivativeBias1(x[1],  x[3], self.Ws[layeri], der) ,x[5])
+                lambda x: (x[:layeri], self.derivativeBias1(x[layeri-2],  x[layeri], self.Ws[layeri/2][1:, :], der) ,x[-1])
             )
-            i -= 1
-        backward = backward.map(lambda x: (x[1], x[2], x[3], x[4], self.derivativeWeights(x[0], x[4]) ,x[5], 1))
+        # Compute the final derivative
+        backward = backward.map(lambda x: (x[1:n_layers], self.derivativeWeights(x[0], x[-2]) ,x[-1], 1))
         return backward
 
-    # Compute the derivative of the error regarding B1
+    # Compute the derivative of the error regarding biases
     def derivativeBias1(self, h_h, dB, W, f_prime):
         return np.dot(dB, W.T) * f_prime(h_h)
 
-    # Compute the derivative of the error regarding B2
+    # Compute the derivative of the error regarding the final bias
     def derivativeBias2(self, y_pred, y_true, y_h, f_prime):
         return (y_pred - y_true) * f_prime(y_h)
 
@@ -232,19 +212,24 @@ class NeuralNetworkPyspark():
             # This needs to be generalized to the size of the network
             gradientCostAcc = backward_rdd.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3], x[4] + y[4], x[5] + y[5], x[6] + y[6]))
 
-            # Cost and Accuarcy of the mini batch
-            n = gradientCostAcc[-1] # number of images in the mini batch
+            # Cost and Error of the mini batch
+            n = gradientCostAcc[-1] # number of samples in the mini batch
             cost = gradientCostAcc[0]/n # Cost over the mini batch
-            acc = gradientCostAcc[5]/n # Accuarcy over the mini batch
+            acc = gradientCostAcc[-2]/n # Mean squared error over the mini batch
             
             # Add to history
             cost_history.append(cost)
             acc_history.append(acc)
             
-            # Extract gradiends
-            ### self.all_gradients #???
+            # Extract gradients
+            layeri = len(self.n_hiddens_per_layer)
+            for i in range(1, len(gradientCostAcc)-2, 2):
+                self.dE_dWs[layeri][1:, :] = gradientCostAcc[i]
+                self.dE_dWs[layeri][0:1, :] = gradientCostAcc[i+1]
+                layeri -= 1
                     
-            # Update parameter with new learning rate and gradients using Gradient Descent
+            # Update parameters with learning rate and gradients using Gradient Descent
+
             ### self.all_weights #???
 
             # Display performances
