@@ -38,8 +38,7 @@ if __name__ == "__main__":
     list_of_file_names = [re.search("\/(?P<FileName>\w+\.\w+)", str(fn)).group("FileName") for fn in list_of_file_names]
     print(list_of_file_names)
     
-    dfs = []
-    
+    dfs = []    
     for file_name in list_of_file_names:
         if ".csv" in file_name:
             dfs.append(spark.read.csv(file_name))
