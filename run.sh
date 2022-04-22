@@ -2,7 +2,7 @@
 
 # Properties
 filepath="./src/main/grifftest.py"
-input="/input/test_data"
+input="/input/grad_data"
 output="/output/test_out"
 hostname="breckenridge"
 port="41595"
@@ -14,6 +14,6 @@ $HADOOP_HOME/bin/hadoop fs -rm -r $output
 $SPARK_HOME/bin/spark-submit $filepath $input $output $hostname $port
 
 # Show output
-echo "Job Output"
-echo "----------"
-$HADOOP_HOME/bin/hadoop fs -cat $output/*
+# echo "Job Output"
+# echo "----------"
+# $HADOOP_HOME/bin/hadoop fs -cat $output/*
