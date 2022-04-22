@@ -29,7 +29,7 @@ if __name__ == "__main__":
         spark.stop()
         sys.exit(-1)
         
-    df = spark.read.option(header=True).csv(input_path)
+    df = spark.read.option("header", True).csv(input_path)
     
     state_by_state_postal_codes = {"Alabama": "AL", "Alaska": "AK", "Arizona" :	"AZ", 
                                    "Arkansas" : "AR",
