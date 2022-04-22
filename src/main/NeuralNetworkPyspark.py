@@ -2,7 +2,7 @@
 ## Original source from https://github.com/MarvinMartin24/PySpark-Neural-Network/blob/main/NeuralNetwork.ipynb 
 ## and from https://nbviewer.org/url/www.cs.colostate.edu/~cs445/notebooks/07.2%20Optimizers,%20Data%20Partitioning,%20Finding%20Good%20Parameters.ipynb
 ## 
-## Modified 4/21/2022 by Trevor Holland
+## Modified April 2022 by Trevor Holland
 ##
 
 import sys
@@ -15,7 +15,7 @@ class NeuralNetworkPyspark():
     '''Initialization functions'''
     def __init__(self, n_inputs, n_outputs, n_hiddens_per_layer=[3, 10, 10], activation_function='tanh'):
         self.input_layer = n_inputs # number of neurons in the input layer
-        self.hidden_layer = n_hiddens_per_layer # number of neurons in the hidden layers (Custom)
+        self.hidden_layer = n_hiddens_per_layer # list of number of neurons in each of the hidden layers
         self.output_layer = n_outputs # number of neurons in the output layer
         self.act_func = activation_function #activation function
 
@@ -103,8 +103,15 @@ class NeuralNetworkPyspark():
             forward = forward.map(
                 lambda x: (
                     x[:i], 
-                    self.activation(self.preforward(x[i], W[1:, :], W[0:1, :]), act), 
+                    self.preforward(x[i], W[1:, :], W[0:1, :]), 
                     x[i+1]
+                )
+            )\
+            .map(
+                lambda x: (
+                    x[:i+1], 
+                    self.activation(x[i+1], act), 
+                    x[i+2]
                 )
             )
             i += 1
@@ -128,7 +135,7 @@ class NeuralNetworkPyspark():
     #     return self.activation(self.preforward(self.activation(self.preforward(x , W1, B1)), W2, B2))
 
     '''Backward propogation functions'''
-    def backward_rdd(self, X, T):
+    def backward_pass(self, X, T):
         '''Assumes forward_pass just called with layer outputs in the rdd'''
         # error = T - self.Ys[-1]
         # n_samples = X.shape[0]
@@ -153,24 +160,30 @@ class NeuralNetworkPyspark():
             der = self.sigmoid_prime
         else:
             der = self.relu_prime
-        n_layers = len(self.n_hiddens_per_layer) + 1
-        i = len(self.n_hiddens_per_layer) + 1
+        n_layers = 2 * (len(self.n_hiddens_per_layer) + 1)
+        i = 2 * (len(self.n_hiddens_per_layer)  + 1)
         # Compute the error from the output layer
-        ### Update with actual mapped values
+        # map the cost to the output -1 position,
+        # the derivative of the output bias to the output position,
+        # and map the mean square error to the output +1 position
         backward = X.map(
             lambda x: (
-                x[:i], 
-                self.sse(x[i+2], x[i+3]), 
-                self.derivativeB2(x[4], x[5], x[3], der), 
-                self.mse(x[4], x[5])
+                x[:i-1], 
+                self.sse(x[i], x[i+1]), 
+                self.derivativeBias2(x[i], x[i+1], x[i-1], der), 
+                self.mse(x[i], x[i+1])
             )
         )
         # Step backwards through the layers to back-propagate the error
         ### Update with correct delta, weights, and derivations
         ### Also update with correct x[] values
         for layeri in range(n_layers - 1, -1, -1):
-            backward = backward.map(lambda x: (x[0], x[1], x[3], x[4], self.derivativeWeights(x[2], x[4]) ,x[5]))\
-                .map(lambda x: (x[0], x[2], x[3], x[4], self.derivativeBias1(x[1],  x[3], self.Ws[layeri], der) ,x[5]))
+            backward = backward.map(
+                lambda x: (x[0], x[1], x[3], x[4], self.derivativeWeights(x[2], x[4]) ,x[5])
+            )\
+            .map(
+                lambda x: (x[0], x[2], x[3], x[4], self.derivativeBias1(x[1],  x[3], self.Ws[layeri], der) ,x[5])
+            )
             i -= 1
         backward = backward.map(lambda x: (x[1], x[2], x[3], x[4], self.derivativeWeights(x[0], x[4]) ,x[5], 1))
         return backward
@@ -214,7 +227,7 @@ class NeuralNetworkPyspark():
             
             # Compute gradients, cost and accuracy over mini batch 
             forward_rdd = self.forward_pass(train_rdd.sample(False,0.7))
-            backward_rdd = self.backward_rdd(forward_rdd)
+            backward_rdd = self.backward_pass(forward_rdd)
             
             # This needs to be generalized to the size of the network
             gradientCostAcc = backward_rdd.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3], x[4] + y[4], x[5] + y[5], x[6] + y[6]))
