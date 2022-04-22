@@ -29,9 +29,13 @@ if __name__ == "__main__":
         spark.stop()
         sys.exit(-1)
     
-    process = Popen(f'fs -ls {directory_path}', shell=True, stdout=PIPE, stderr=PIPE)
+    hadoop_home = os.environ['HADOOP_HOME']
+    hadoop_home = hadoop_home + "/bin/hadoop"
+    
+    process = Popen(f'{hadoop_home} fs -ls {directory_path}', shell=True, stdout=PIPE, stderr=PIPE)
     std_out, std_err = process.communicate()
-    list_of_file_names = [fn.split(' ')[-1].split('/')[-1] for fn in std_out.decode().split('\n')[1:]][:-1]
+    list_of_file_names = [fn for fn in std_out.decode().split('\n')[1:]][:-1]
+    list_of_file_names = [re.search("\/(?P<FileName>\w+\.\w+)", str(fn)).group("FileName") for fn in list_of_file_names]
     print(list_of_file_names)
     
     #Add a new column for the county and state postal abbrev
