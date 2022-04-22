@@ -23,7 +23,13 @@ if __name__ == "__main__":
         .getOrCreate()
 
     input_path = sys.argv[1]
-    print(input_path)
+    
+    if ".csv" not in input_path:
+        print("Currently only targets .csv files")
+        spark.stop()
+        
+    df = spark.read().csv(input_path)
+    df.show()
     # output_path = sys.argv[2]
     # Reads into a dataframe.
     # Need to figure out the format.
