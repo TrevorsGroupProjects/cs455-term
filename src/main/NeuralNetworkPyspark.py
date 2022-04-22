@@ -115,13 +115,6 @@ class NeuralNetworkPyspark():
                 )
             )
             i += 1
-        forward = forward.map(
-            lambda x: (
-                x[:i], 
-                self.preforward(x[i], W[1:, :], W[0:1, :] ), 
-                x[i+1]
-            )
-        )
         return forward
 
     # Compute the layer propagation without activation
@@ -205,7 +198,7 @@ class NeuralNetworkPyspark():
 
         for epoch in range(num_epochs):
             
-            # Compute gradients, cost and accuracy over mini batch 
+            # Compute gradients, cost, and error over mini batch 
             forward_rdd = self.forward_pass(train_rdd.sample(False,0.7))
             backward_rdd = self.backward_pass(forward_rdd)
             
@@ -229,12 +222,11 @@ class NeuralNetworkPyspark():
                 layeri -= 1
                     
             # Update parameters with learning rate and gradients using Gradient Descent
+            self.all_weights -= learning_rate * self.all_gradients
 
-            ### self.all_weights #???
-
-            # Display performances
+            # Display performance
             if verbose:
-                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Acc: {acc_history[epoch]*100} | Batchsize:{n}")
+                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]*100} | Batchsize:{n}")
 
         print("Training end..")
         return self
