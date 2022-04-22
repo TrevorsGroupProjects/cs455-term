@@ -3,12 +3,9 @@ import sys
 import tempfile
 import shutil
 
+
 from pyspark.sql import SparkSession
-from pyspark.ml.classification import LogisticRegression
-from pyspark.ml.feature import Normalizer
-from pyspark.ml.linalg import Vectors
-from pyspark.mllib.stat import Statistics
-from pyspark.mllib.util import MLUtils
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -30,6 +27,7 @@ if __name__ == "__main__":
         sys.exit(-1)
         
     df = spark.read.option("header", True).csv(input_path)
+    
     
     state_by_state_postal_codes = {"Alabama": "AL", "Alaska": "AK", "Arizona" :	"AZ", 
                                    "Arkansas" : "AR",
@@ -81,8 +79,9 @@ if __name__ == "__main__":
                                    "Wyoming": "WY"}
     
     #Add a new column for the county and state postal abbrev
-    df["County-State"] = df["County"] + state_by_state_postal_codes[df["State"]]
-    df.show()
+    #df["County-State"] = df["County"] + state_by_state_postal_codes[df["State"]]
+    df.withColumn("County-State", df.County + "-" + state_by_state_postal_codes(df.State))
+    df.head()
     
 
     spark.stop()
