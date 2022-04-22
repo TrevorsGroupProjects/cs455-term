@@ -88,14 +88,19 @@ if __name__ == "__main__":
     df = df.withColumn("County-State", F.concat_ws("-", F.trim(F.col("County")), mapping_expr.getItem(F.col("State"))))
     df.show()
     
-    #columns_to_drop = ["Name", "State", "Total Population 16 to 19 Years", "Total_Male_Dropout", "Total_Female_Dropout", "Total_Dropout", "County"]
-    #df = df.withColumn("Drop_Out_Rate_By_County", F.col("Total_Dropout") / F.col("Total Population 16 to 19 Years")).drop(*columns_to_drop)
-    #df.show()
+    #Column Name Reference
+    #"B23027_002E": "Population age 16 to 19 years", 
+    #"B23027_003E": "Population age 16 to 19 years who worked in the past 12 months"
+    
+    #All Caps 'Name' because that is the actual name of the column
+    columns_to_drop = ["NAME", "State", "County", "B23027_002E", "B23027_003E"]
+    df = df.withColumn("Percentage of Teens Who Work Part or Full time", F.col("B23027_003E") / F.col("B23027_002E")).drop(*columns_to_drop)
+    df.show()
     
     #Save the new dataframe as a text file that is similar to the other input data
-    #m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
+    m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
     #df.coalesce(1).write.format("text").option("header", "false").mode("append").save(m.group('Path') + "ProcessedDropOutRatesPerCounty") 
-    #df.write.csv(m.group('Path') + "ProcessedDropOutRatesPerCounty")
+    df.write.csv(m.group('Path') + "ProcessedPercentageOfTeensWithJobs")
     
 
     spark.stop()
