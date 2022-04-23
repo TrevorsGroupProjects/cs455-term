@@ -100,7 +100,7 @@ if __name__ == "__main__":
     #Save the new dataframe as a text file that is similar to the other input data
     m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
     #df.coalesce(1).write.format("text").option("header", "false").mode("append").save(m.group('Path') + "ProcessedDropOutRatesPerCounty") 
-    df.write.csv(m.group('Path') + "ProcessedPercentageOfTeensWithJobs")
+    df.write.option("header", True).csv(m.group('Path') + "ProcessedPercentageOfTeensWithJobs")
     
 
     spark.stop()

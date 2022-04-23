@@ -92,10 +92,10 @@ if __name__ == "__main__":
     df = df.withColumn("Drop_Out_Rate_By_County", F.col("Total_Dropout") / F.col("Total Population 16 to 19 Years")).drop(*columns_to_drop)
     df.show()
     
-    #Save the new dataframe as a text file that is similar to the other input data
+    #Save the new dataframe as a csv
     m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
     #df.coalesce(1).write.format("text").option("header", "false").mode("append").save(m.group('Path') + "ProcessedDropOutRatesPerCounty") 
-    df.write.csv(m.group('Path') + "ProcessedDropOutRatesPerCounty")
+    df.write.option("header", True).csv(m.group('Path') + "ProcessedDropOutRatesPerCounty")
     
 
     spark.stop()
