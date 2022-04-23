@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # Need to figure out the format.
     #df = spark.read.format("libsvm").load(input_path).cache()
     
-    df = spark.read.csv(input_file)
+    df = spark.read.option("header", True).csv(input_file)
     
     df = df.drop("County-State")
     
