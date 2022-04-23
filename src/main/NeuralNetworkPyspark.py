@@ -69,11 +69,11 @@ class NeuralNetworkPyspark():
         def stds(A):
             return np.std(A, axis=0)
 
-        self.Xmeans = rdd.map(lambda x: (means(x[:self.input_layer], axis=0 ) ) ).collect()
-        self.Xstds = rdd.map(lambda x: (stds(x[:self.input_layer], axis=0 ) ) ).collect()
+        self.Xmeans = rdd.map(lambda x: (means(x[:self.input_layer]) ) ).collect()
+        self.Xstds = rdd.map(lambda x: (stds(x[:self.input_layer]) ) ).collect()
         self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
-        self.Tmeans = rdd.map(lambda x: (means(x[self.input_layer:], axis=0 ) ) ).collect()
-        self.Tstds = rdd.map(lambda x: (stds(x[self.input_layer:], axis=0 ) ) ).collect()
+        self.Tmeans = rdd.map(lambda x: (means(x[self.input_layer:]) ) ).collect()
+        self.Tstds = rdd.map(lambda x: (stds(x[self.input_layer:]) ) ).collect()
         self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
 
         return self
