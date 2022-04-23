@@ -26,7 +26,7 @@ def processGradData(spark, input_folder_path, output_folder):
     # 3 = State Abbreviation
     # 4 = County
     # 88 = Graduation Rate
-    rdd = rdd.map(lambda x: [x[3], x[4], x[88]], preservesPartitioning=True)
+    rdd = rdd.map(lambda x: [x[4], x[3], x[88]], preservesPartitioning=True)
 
     # Separate Headers From RDD
     rdd = rdd.zipWithIndex().filter(lambda tup: tup[1] > 0).map(lambda tup: tup[0], preservesPartitioning=True)
@@ -46,8 +46,8 @@ def processGradData(spark, input_folder_path, output_folder):
     for string in noncounty_list:
         df = df.filter(df.county != string)
 
-    # Format The County Column
-    rdd = df.rdd.map(lambda x: (x[0], adjustCounties(x[1]), x[2]), preservesPartitioning=True)
+    # Format The County and State Columns
+    rdd = df.rdd.map(lambda x: (adjustCounties(x[0])+"-"+x[1], x[2]), preservesPartitioning=True)
 
     # Save RDD to HDFS
     rdd = rdd.coalesce(1)
