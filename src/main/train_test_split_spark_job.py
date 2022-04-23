@@ -48,7 +48,7 @@ if __name__ == "__main__":
     print(columns)
     
     if "SVI" not in columns:
-        #print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
+        print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
         sys.exit(-1)
     
         
@@ -76,6 +76,9 @@ if __name__ == "__main__":
     rdd = df_reordered.rdd
     #rdd.collect()    
     print(rdd.collect())
+    x = df_reordered.select("SVI")
+    x.show()
+        
     
     nn.collectMeansAndStandards(rdd)            
 
