@@ -22,7 +22,8 @@ if __name__ == "__main__":
         .getOrCreate()
 
     directory_path = sys.argv[1]
-    
+    print(directory_path)    
+
     #This is assuming that you are not targeting an hdfs with an FQDN!
     if "." in directory_path:
         print("\n\n!!!!!!!Currently only targets Directories....EXITING!!!!!!\n\n")
@@ -41,9 +42,9 @@ if __name__ == "__main__":
     dfs = []    
     for file_name in list_of_file_names:
         if ".csv" in file_name:
-            dfs.append(spark.read.csv(file_name))
+            dfs.append(spark.read.csv(directory_path + "/" + file_name))
         elif ".txt" in file_name:
-            dfs.append(spark.read.options("delimeter", "\' \'").csv(file_name))
+            dfs.append(spark.read.option("delimeter", r"\' \'").csv(directory_path + "/" + file_name))
     
     for df in dfs:
         df.show()
