@@ -191,13 +191,7 @@ class NeuralNetworkPyspark():
             # Compute gradients, cost, and error over mini batch 
             forward_rdd = self.forward_pass(train_rdd.sample(False,0.7))
             backward_rdd = self.backward_pass(forward_rdd)
-            
-            ###############################################################
-            #  This needs to be generalized so that the length of x and y
-            #  don't matter.
-            ###############################################################
-            gradientCostAcc = backward_rdd.reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3], x[4] + y[4], x[5] + y[5], x[6] + y[6]))
-
+            gradientCostAcc = backward_rdd.reduce(lambda x, y: [x[i] + y[i] for i in range(len(x))])
 
             # Cost and Error of the mini batch
             n = gradientCostAcc[-1] # number of samples in the mini batch
