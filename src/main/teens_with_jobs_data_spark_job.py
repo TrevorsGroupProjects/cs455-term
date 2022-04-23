@@ -93,7 +93,7 @@ if __name__ == "__main__":
     #"B23027_003E": "Population age 16 to 19 years who worked in the past 12 months"
     
     #All Caps 'Name' because that is the actual name of the column
-    columns_to_drop = ["NAME", "State", "County", "B23027_002E", "B23027_003E"]
+    columns_to_drop = ["_c0","NAME", "State", "County", "B23027_002E", "B23027_003E"]
     df = df.withColumn("Percentage of Teens Who Work Part or Full time", F.col("B23027_003E") / F.col("B23027_002E")).drop(*columns_to_drop)
     df.show()
     

@@ -88,7 +88,7 @@ if __name__ == "__main__":
     df = df.withColumn("County-State", F.concat_ws("-", F.upper(F.trim(F.col("County"))), mapping_expr.getItem(F.col("State"))))
     df.show()
     
-    columns_to_drop = ["Name", "State", "Total Population 16 to 19 Years", "Total_Male_Dropout", "Total_Female_Dropout", "Total_Dropout", "County"]
+    columns_to_drop = ["_c0","Name", "State", "Total Population 16 to 19 Years", "Total_Male_Dropout", "Total_Female_Dropout", "Total_Dropout", "County"]
     df = df.withColumn("Drop_Out_Rate_By_County", F.col("Total_Dropout") / F.col("Total Population 16 to 19 Years")).drop(*columns_to_drop)
     df.show()
     
