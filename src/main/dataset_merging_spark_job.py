@@ -37,7 +37,7 @@ if __name__ == "__main__":
     std_out, std_err = process.communicate()
     list_of_file_names = [fn for fn in std_out.decode().split('\n')[1:]][:-1]
     list_of_file_names = [re.search("\/(?P<FileName>\w+\.\w+)", str(fn)).group("FileName") for fn in list_of_file_names]
-    print(list_of_file_names)
+    #print(list_of_file_names)
     
     dfs = []    
     for file_name in list_of_file_names:
