@@ -17,7 +17,8 @@ from pyspark.ml.linalg import Vectors
 from pyspark.mllib.stat import Statistics
 from pyspark.mllib.util import MLUtils
 
-import NeuralNetworkPyspark
+import NeuralNetworkPyspark as npys
+#from NeuralNetworkPyspark impoirt NeuralNetworkPyspark
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -28,6 +29,9 @@ if __name__ == "__main__":
         .builder\
         .appName("PredictEducation")\
         .getOrCreate()
+    
+    spark.sparkContext.addPyFile("NeuralNetworkPyspark.py")
+    
 
     input_path = sys.argv[1]
     # output_path = sys.argv[2]
@@ -44,7 +48,7 @@ if __name__ == "__main__":
     print(columns)
     
     if "SVI" not in columns:
-         print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
+        #print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
         sys.exit(-1)
     
         
@@ -53,9 +57,27 @@ if __name__ == "__main__":
     df_reordered = df.select(columns)
     df_reordered.show()
     
+    input_columns = ["SVI"] 
+    output_columns = [col for col in columns if col not in input_columns]    
+
+    x = df_reordered.select(input_columns)
+    x.show()
+
+    y = df_reordered.select(output_columns)
+    y.show()    
+
+    n_inputs = len(x.columns)
+    n_outputs = len(y.columns)
     
-        
+    print(os.getcwd())
+     
+    nn = npys.NeuralNetworkPyspark(n_inputs, n_outputs)
     
+    rdd = df_reordered.rdd
+    #rdd.collect()    
+    print(rdd.collect())
+    
+    nn.collectMeansAndStandards(rdd)            
 
     spark.stop()
 
