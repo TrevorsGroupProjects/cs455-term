@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     mapping_expr = F.create_map([F.lit(x) for x in chain(*state_by_state_postal_codes.items())])
     
-    df = df.withColumn("County-State", F.concat_ws("-", F.trim(F.col("County")), mapping_expr.getItem(F.col("State"))))
+    df = df.withColumn("County-State", F.concat_ws("-", F.upper(F.trim(F.col("County"))), mapping_expr.getItem(F.col("State"))))
     df.show()
     
     columns_to_drop = ["Name", "State", "Total Population 16 to 19 Years", "Total_Male_Dropout", "Total_Female_Dropout", "Total_Dropout", "County"]
