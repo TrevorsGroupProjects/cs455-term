@@ -41,17 +41,19 @@ if __name__ == "__main__":
     
     dfs = []    
     for file_name in list_of_file_names:
-        if ".csv" in file_name:
-            dfs.append(spark.read.option("header", True).csv(directory_path + "/" + file_name))
+        #if ".csv" in file_name:
+        dfs.append(spark.read.option("header", True).csv(directory_path + "/" + file_name))
         #elif ".txt" in file_name:
         #    txts.append(spark.read.csv(directory_path + "/" + file_name))
 
     starting_df = dfs[0]    
     starting_df.show()
     for i in range(1, len(dfs)):
-        starting_df.join(dfs[i], ["County-State"]).show()
+        starting_df = starting_df.join(dfs[i], ["County-State"])
     
     starting_df.show()
+
+    starting_df.write.option("header", True).csv(directory_path + "/MergedData")
 
     #for txt in txts:
     #    txt.show()   
