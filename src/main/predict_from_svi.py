@@ -49,9 +49,18 @@ def processGradData(spark, input_folder_path, output_folder):
     # Format The County and State Columns
     rdd = df.rdd.map(lambda x: (adjustCounties(x[0])+"-"+x[1], x[2]), preservesPartitioning=True)
 
-    # Save RDD to HDFS
-    rdd = rdd.coalesce(1)
-    rdd.saveAsTextFile(output_folder)
+    # Write DataFrame to CSV File
+    # TODO: Implement This!
+
+    # # Turn Back Into CSV Format
+    # def toCSVLine(data):
+    #     return ','.join(str(d) for d in data)
+
+    # rdd = rdd.map(toCSVLine)
+
+    # # Save RDD to HDFS
+    # rdd = rdd.coalesce(1)
+    # rdd.saveAsTextFile(output_folder)
 
     # Return the RDD
     return rdd
