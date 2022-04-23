@@ -36,7 +36,15 @@ if __name__ == "__main__":
     
     print(columns)
     
-    
+    if "SVI" in columns:
+        columns = columns.remove("SVI")
+        columns.insert(0, "SVI")
+        df_reordered = df.select(columns)
+        df_reordered.show()
+    else:
+        print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
+        sys.exit(-1)
+        
     
 
     spark.stop()
