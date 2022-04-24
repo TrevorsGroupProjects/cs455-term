@@ -18,7 +18,7 @@ from subprocess import Popen, PIPE
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: public_private_school_calculation_spark_job.py <directory> <private|public>", file=sys.stderr)
+        print("Usage: public_private_school_count_by_county_spark_job.py <directory> <private|public>", file=sys.stderr)
         sys.exit(-1)
         
     #file_path = "hdfs://cheyenne:41760/dropout_data/usa_drop_out_data.csv"

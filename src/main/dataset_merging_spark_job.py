@@ -53,7 +53,7 @@ if __name__ == "__main__":
     
     starting_df.show()
 
-    starting_df.write.option("header", True).csv(directory_path + "/MergedData")
+    starting_df.coalesce(1).write.option("header", True).csv(directory_path + "/MergedData")
 
     #for txt in txts:
     #    txt.show()   
