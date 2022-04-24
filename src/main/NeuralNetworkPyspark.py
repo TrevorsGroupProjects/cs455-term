@@ -250,10 +250,11 @@ class NeuralNetworkPyspark():
         if self.trained:
             use_rdd = use_rdd.map(lambda x: (self.standardizeX(x[0]), self.standardizeT(x[1]) ))
         result = self.forward_pass(use_rdd)
+        result = result.map(lambda x: (x[-2]))
         if self.trained:
             def unstandardize(Y):
                 return Y * self.Tstds + self.Tmeans
-            result = result.map(lambda x: (unstandardize(x[-2])))
+            result = result.map(lambda x: (unstandardize(x)))
         result = result.collect()
         return result
         
