@@ -92,13 +92,12 @@ if __name__ == "__main__":
     #count = starting_df.groupBy("County-State").agg()
     counts = starting_df.groupBy("County-State").count()
     counts = counts.withColumn(new_column_name, F.col("count"))
-    counts.select("County-State", new_column_name)
-    counts.show()
+    counts = counts.select("County-State", new_column_name)
   
-    
+    counts.coalesce(1).write.option("header", True).csv(directory_path + "/MergedArcGISUrban")
     
         
-            
+    spark.stop()           
         
         
     
