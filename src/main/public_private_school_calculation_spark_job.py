@@ -61,10 +61,10 @@ if __name__ == "__main__":
     
     if len(arcgis_dfs) != 0:
         for adf in arcgis_dfs:
-            print(len(adf))
-            adf = adf.na.drop(Seq("COUNTY"))
+            print(adf.count())
+            adf = adf.na.drop(subset=["COUNTY"])
             print(adf.show())
-            print(len(adf))
+            print(adf.count())
         
             
         
