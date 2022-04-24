@@ -64,11 +64,11 @@ class NeuralNetworkPyspark():
         return all_weights, views
 
     def collectMeansAndStandards(self, rdd):
-        self.Xmeans = rdd.map(lambda x: (np.mean(x[:self.input_layer], axis=0 ) ) ).collect()
-        self.Xstds = rdd.map(lambda x: (np.std(x[:self.input_layer], axis=0 ) ) ).collect()
+        self.Xmeans = rdd.map(lambda x: (np.mean(x[0], axis=0 ) ) ).collect()
+        self.Xstds = rdd.map(lambda x: (np.std(x[1], axis=0 ) ) ).collect()
         self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
-        self.Tmeans = rdd.map(lambda x: (np.mean(x[self.input_layer:], axis=0 ) ) ).collect()
-        self.Tstds = rdd.map(lambda x: (np.std(x[self.input_layer:], axis=0 ) ) ).collect()
+        self.Tmeans = rdd.map(lambda x: (np.mean(x[0], axis=0 ) ) ).collect()
+        self.Tstds = rdd.map(lambda x: (np.std(x[1], axis=0 ) ) ).collect()
         self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
         return self
     
@@ -199,7 +199,7 @@ class NeuralNetworkPyspark():
             self.collectMeansAndStandards(train_rdd)
         
         # Standardize X and T
-        train_rdd = train_rdd.map(lambda x: (self.standardizeX(x[:self.input_layer]), self.standardizeT(x[self.input_layer:]) ))
+        train_rdd = train_rdd.map(lambda x: (self.standardizeX(x[0]), self.standardizeT(x[1]) ))
 
         # History over epochs
         cost_history = []
@@ -246,7 +246,7 @@ class NeuralNetworkPyspark():
     def use(self, use_rdd):
         # Use the trained model over the use_rdd
         if self.trained:
-            use_rdd = use_rdd.map(lambda x: (self.standardizeX(x[:self.input_layer]), self.standardizeT(x[self.input_layer:]) ))
+            use_rdd = use_rdd.map(lambda x: (self.standardizeX(x[0]), self.standardizeT(x[1]) ))
         result = self.forward_pass(use_rdd)
         if self.trained:
             def unstandardize(Y):
