@@ -78,8 +78,8 @@ if __name__ == "__main__":
         starting_df = starting_df.union(filtered_df)
     
     #starting_df.show()
-    starting_df.write.option("header", True).csv(directory_path + "/MergedArcGISUrban")
-    
+    #starting_df.write.option("header", True).csv(directory_path + "/MergedArcGISUrban")
+    count = starting_df.groupBy("County-State").agg()
     
         
             
