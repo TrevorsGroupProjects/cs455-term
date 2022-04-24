@@ -51,13 +51,13 @@ if __name__ == "__main__":
     for file_name in list_of_file_names:
         #if ".csv" in file_name:
         df = spark.read.option("header", True).csv(directory_path + "/" + file_name)
-        if ["County-State", "Name"] not in df.columns:
+        if "County-State" not in df.columns:
             arcgis_dfs.append(df)
-        elif starting_df != None:
-            start_df = df
+        elif starting_df == None:
+            starting_df = df
         else:
             dfs.append(df)
-            
+    
     
     if len(arcgis_dfs) != 0:
         for adf in arcgis_dfs:
@@ -68,14 +68,17 @@ if __name__ == "__main__":
             adf = adf.select("County-State", "Name")
             dfs.append(adf)
     
-    distinct_counties = starting_df.select("County-State").distinct
-        
+    distinct_counties = starting_df.select("County-State").distinct().collect()
+    #print(len(distinct_counties))
     for df in dfs:
-        distinct_counties_in_df = df.select("County-State").distinct
-        missing_counties = [county_state for county_state in distinct_counties_in_df county_state not in distinct_counties]
-        filtered_df = df.filter(df("Count-State") in missing_counties)
-        filtered_df.show()
-        
+        distinct_counties_in_df = df.select("County-State").distinct().collect()
+        missing_counties = [county_state[0] for county_state in distinct_counties_in_df if county_state not in distinct_counties]
+        filtered_df = df.filter(F.col("County-State").isin(missing_counties))
+        #filtered_df.show()
+        starting_df = starting_df.union(filtered_df)
+    
+    #starting_df.show()
+    starting_df.write.option("header", True).csv(directory_path + "/MergedArcGISUrban")
     
     
         
