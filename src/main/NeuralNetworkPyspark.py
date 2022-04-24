@@ -194,6 +194,8 @@ class NeuralNetworkPyspark():
 
     '''Training functions'''
     def train(self, train_rdd, num_epochs=50, learning_rate=0.1, verbose=True):
+        # train_rdd comes in mapped to ([x], [t])
+
         # Setup standardization parameters
         if self.Xmeans is None:
             self.collectMeansAndStandards(train_rdd)
