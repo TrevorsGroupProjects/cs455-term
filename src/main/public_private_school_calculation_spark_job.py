@@ -64,6 +64,7 @@ if __name__ == "__main__":
             #Drop the schools that don't have a county
             adf = adf.na.drop(subset=["COUNTY"])
             adf = adf.withColumn("County-State", F.concat_ws("-", F.upper(F.col("COUNTY")), F.col("STATE")))
+            adf = adf.withColumn("Name", F.col("NAME"))
             adf = adf.select("County-State", "Name")
             dfs.append(adf)
     
