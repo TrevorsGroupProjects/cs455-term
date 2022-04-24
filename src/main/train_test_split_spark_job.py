@@ -77,24 +77,24 @@ if __name__ == "__main__":
     rdd = df_reordered.rdd
     #rdd.collect()    
     #print(rdd.collect())
-    x_rdd = x.rdd
-    y_rdd = y.rdd
+    #x_rdd = x.rdd
+    #y_rdd = y.rdd
     
-    import numpy as np    
-
-    #y_test = y_rdd.map(lambda v: np.mean([float(v[i]) for i in range(len(v))], axis=0)).collect()
-    y_test = y_rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect()
-    y_np_test = np.array(y_test)
+    #import numpy as np
+    #print(rdd.map(lambda x: (np.mean(x[0], axis=0 ) ) ))
+    #y_test = y_rdd.map(lambda v: np.mean([float(v[i]) for i in range(len(v))], axis=0))
+    #y = np.array(y_rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect())
+    #y = y_rdd.map(lambda v: [float(v[i]) for i in range(len(v))])
+    #y = np.mean(np.array(y.map(lambda v: v)), axis=0)
+    #print(y)
+    #print(y.collect())
+    #y = np.array(y_test)
     
-    y_np_test_mean = np.mean(y_np_test, axis=0)
-    #print(y_test)
-    print(y_np_test.shape)
-    print(y_np_test_mean.shape)
-    #print(x_rdd.collect())
+    #y_np_test_mean = np.mean(y_np_test, axis=0)
             
 
-    working = x_rdd.map(lambda x: float(x[0])).mean()
-    print(working)
+    #working = x_rdd.map(lambda x: float(x[0])).mean()
+    #print(working)
     #print(type(working))
     #print(x_rdd.mean())   
     #print(y_rdd.mapValues(lambda y: y).collect())
