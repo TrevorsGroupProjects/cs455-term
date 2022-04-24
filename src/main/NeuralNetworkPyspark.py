@@ -253,7 +253,7 @@ class NeuralNetworkPyspark():
         if self.trained:
             def unstandardize(Y):
                 return Y * self.Tstds + self.Tmeans
-            result = result.map(lambda x: (x[:-2], unstandardize(x[-2]), x[-1]))
+            result = result.map(lambda x: (unstandardize(x[-2])))
         result = result.collect()
-        return result[-2]
+        return result
         
