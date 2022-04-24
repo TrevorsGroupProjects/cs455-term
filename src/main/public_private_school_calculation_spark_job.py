@@ -51,7 +51,7 @@ if __name__ == "__main__":
     for file_name in list_of_file_names:
         #if ".csv" in file_name:
         df = spark.read.option("header", True).csv(directory_path + "/" + file_name)
-        if "County-State" not in df.columns:
+        if ["County-State", "Name"] not in df.columns:
             arcgis_dfs.append(df)
         elif starting_df != None:
             start_df = df
@@ -64,8 +64,19 @@ if __name__ == "__main__":
             #Drop the schools that don't have a county
             adf = adf.na.drop(subset=["COUNTY"])
             adf = adf.withColumn("County-State", F.concat_ws("-", F.upper(F.col("COUNTY")), F.col("STATE")))
-            adf.show()
-            
+            adf = adf.select("County-State", "Name")
+            dfs.append(adf)
+    
+    distinct_counties = starting_df.select("County-State").distinct
+        
+    for df in dfs:
+        distinct_counties_in_df = df.select("County-State").distinct
+        missing_counties = [county_state for county_state in distinct_counties_in_df county_state not in distinct_counties]
+        filtered_df = df.filter(df("Count-State") in missing_counties)
+        filtered_df.show()
+        
+    
+    
         
             
         
