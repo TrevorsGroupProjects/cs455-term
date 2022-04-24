@@ -68,13 +68,21 @@ class NeuralNetworkPyspark():
             return np.mean(A, axis=0)
         def stds(A):
             return np.std(A, axis=0)
-
-        self.Xmeans = rdd.map(lambda x: (means(x[:self.input_layer]) ) ).collect()
-        self.Xstds = rdd.map(lambda x: (stds(x[:self.input_layer]) ) ).collect()
-        self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
-        self.Tmeans = rdd.map(lambda x: (means(x[self.input_layer:]) ) ).collect()
-        self.Tstds = rdd.map(lambda x: (stds(x[self.input_layer:]) ) ).collect()
-        self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
+        
+        
+        
+        numpy_from_rdd = np.array(y_rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect())
+        
+        self.Xmeans = np.mean(numpy_from_rdd[:self.input_layer], axis=0)
+        
+        print(self.Xmeans)
+        
+        #self.Xmeans = rdd.map(lambda x: (means(x[:self.input_layer]) ) ).collect()
+        #self.Xstds = rdd.map(lambda x: (stds(x[:self.input_layer]) ) ).collect()
+        #self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
+        #self.Tmeans = rdd.map(lambda x: (means(x[self.input_layer:]) ) ).collect()
+        #self.Tstds = rdd.map(lambda x: (stds(x[self.input_layer:]) ) ).collect()
+        #self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
 
         return self
 
