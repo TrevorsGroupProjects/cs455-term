@@ -36,7 +36,10 @@ if __name__ == "__main__":
         print("\n\n!!!!!!!Currently only targets Directories....EXITING!!!!!!\n\n")
         spark.stop()
         sys.exit(-1)
-        
+    
+    total_school_count = "Total-School-Count"
+    percentage_private_school = "Percentage-Private-School"
+    percentage_public_school = "Percentage-Public-School"
      
     hadoop_home = os.environ['HADOOP_HOME']
     hadoop_home = hadoop_home + "/bin/hadoop"
@@ -56,6 +59,11 @@ if __name__ == "__main__":
     starting_df = dfs[0]
     for i in range(1, len(dfs)):
         starting_df = starting_df.join(dfs[i], ["County-State"])
+   
+   
+    starting_df = starting_df.withColumn(total_school_count, int(F.col("Public") + int(F.col("Private"))))\
+        .withColumn(percentage_private_school, F.col("Private") / F.col(total_school_count))\
+        .withColumn(percentage_public_school, F.col("Public") / F.col(total_school_count))
    
     starting_df.show() 
    
