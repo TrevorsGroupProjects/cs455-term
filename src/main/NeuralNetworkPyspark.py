@@ -64,37 +64,18 @@ class NeuralNetworkPyspark():
         return all_weights, views
 
     def collectMeansAndStandards(self, rdd):
-        def means(A):
-            return np.mean(A, axis=0)
-        def stds(A):
-            return np.std(A, axis=0)
-        
-        
-        
-        numpy_from_rdd = np.array(y_rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect())
-        
-        self.Xmeans = np.mean(numpy_from_rdd[:self.input_layer], axis=0)
-        
-        print(self.Xmeans)
-        
-        #self.Xmeans = rdd.map(lambda x: (means(x[:self.input_layer]) ) ).collect()
-        #self.Xstds = rdd.map(lambda x: (stds(x[:self.input_layer]) ) ).collect()
-        #self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
-        #self.Tmeans = rdd.map(lambda x: (means(x[self.input_layer:]) ) ).collect()
-        #self.Tstds = rdd.map(lambda x: (stds(x[self.input_layer:]) ) ).collect()
-        #self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
+        numpy_from_rdd = np.array(rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect())
 
+        means = np.mean(numpy_from_rdd, axis=0)
+        self.Xmeans = means[:self.input_layer]
+        self.Tmeans = means[self.input_layer:]
+        
+        stds = np.std(numpy_from_rdd, axis=0)
+        self.Xstds = stds[:self.input_layer]
+        self.Tstds = stds[self.input_layer:]
+        self.Xstds[self.Xstds == 0]
         return self
 
-    #def collectMeansAndStandards(self, rdd):
-    #    self.Xmeans = rdd.map(lambda x: (np.mean(x[:self.input_layer], axis=0 ) ) ).collect()
-    #    self.Xstds = rdd.map(lambda x: (np.std(x[:self.input_layer], axis=0 ) ) ).collect()
-    #    self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
-    #    self.Tmeans = rdd.map(lambda x: (np.mean(x[self.input_layer:], axis=0 ) ) ).collect()
-    ##    self.Tstds = rdd.map(lambda x: (np.std(x[self.input_layer:], axis=0 ) ) ).collect()
-     #   self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
-     #   return self
-    
     def standardizeX(self, X):
         return (X - self.Xmeans) / self.Xstds
 

@@ -59,7 +59,8 @@ if __name__ == "__main__":
     
     input_columns = ["SVI"] 
     output_columns = [col for col in columns if col not in input_columns]    
-
+    
+    #print(output_columns)
     x = df_reordered.select(input_columns)
     x.show()
 
@@ -69,19 +70,39 @@ if __name__ == "__main__":
     n_inputs = len(x.columns)
     n_outputs = len(y.columns)
     
-    print(os.getcwd())
+    #print(os.getcwd())
      
     nn = npys.NeuralNetworkPyspark(n_inputs, n_outputs)
     
     rdd = df_reordered.rdd
     #rdd.collect()    
-    print(rdd.collect())
-    x = df_reordered.select("SVI")
-    x.show()
-        
+    #print(rdd.collect())
+    x_rdd = x.rdd
+    y_rdd = y.rdd
     
-    nn.collectMeansAndStandards(rdd)            
+    import numpy as np    
 
+    #y_test = y_rdd.map(lambda v: np.mean([float(v[i]) for i in range(len(v))], axis=0)).collect()
+    y_test = y_rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect()
+    y_np_test = np.array(y_test)
+    
+    y_np_test_mean = np.mean(y_np_test, axis=0)
+    #print(y_test)
+    print(y_np_test.shape)
+    print(y_np_test_mean.shape)
+    #print(x_rdd.collect())
+            
+
+    working = x_rdd.map(lambda x: float(x[0])).mean()
+    print(working)
+    #print(type(working))
+    #print(x_rdd.mean())   
+    #print(y_rdd.mapValues(lambda y: y).collect())
+        
+
+
+    nn.collectMeansAndStandards(rdd)            
+    print("\n\n!!!DONE!!!")
     spark.stop()
 
 
