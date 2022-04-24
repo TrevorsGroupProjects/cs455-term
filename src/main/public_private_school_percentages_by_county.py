@@ -60,40 +60,14 @@ if __name__ == "__main__":
     for i in range(1, len(dfs)):
         starting_df = starting_df.join(dfs[i], ["County-State"])
    
-   
-    starting_df = starting_df.withColumn(total_school_count, int(F.col("Public") + int(F.col("Private"))))\
-        .withColumn(percentage_private_school, F.col("Private") / F.col(total_school_count))\
-        .withColumn(percentage_public_school, F.col("Public") / F.col(total_school_count))
 
-    starting_df.show() 
-   
-    columns = starting_df.columns()
+    columns_to_drop = ["Public", "Private", total_school_count]
+
+    starting_df = starting_df.withColumn(total_school_count, F.col("Public") + F.col("Private"))\
+        .withColumn(percentage_private_school, F.col("Private") / F.col(total_school_count))\
+        .withColumn(percentage_public_school, F.col("Public") / F.col(total_school_count))\
+        .drop(*columns_to_drop)
+
     
-    print(columns)
-    
-   
-    #distinct_counties = starting_df.select("County-State").distinct().collect()
-    #print(len(distinct_counties))
-    #for df in dfs:
-    #    distinct_counties_in_df = df.select("County-State").distinct().collect()
-    #    missing_counties = [county_state[0] for county_state in distinct_counties_in_df if county_state not in distinct_counties]
-    #    filtered_df = df.filter(F.col("County-State").isin(missing_counties))
-        #filtered_df.show()
-    #    starting_df = starting_df.union(filtered_df)
-    
-    #starting_df.show()
-    #starting_df.write.option("header", True).csv(directory_path + "/MergedArcGISUrban")
-    #count = starting_df.groupBy("County-State").agg()
-    #counts = starting_df.groupBy("County-State").count()
-    #counts = counts.withColumn(new_column_name, F.col("count"))
-    #counts = counts.select("County-State", new_column_name)
-  
-    #counts.coalesce(1).write.option("header", True).csv(directory_path + "/MergedArcGISUrban")
-    
-        
-    spark.stop()           
-        
-        
-    
-    
-    
+    starting_df.coalesce(1).write.option("header", True).csv(directory_path + "/Public_Private_School_Percentages_Per_County")
+    spark.stop()
