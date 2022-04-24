@@ -64,8 +64,13 @@ if __name__ == "__main__":
     starting_df = starting_df.withColumn(total_school_count, int(F.col("Public") + int(F.col("Private"))))\
         .withColumn(percentage_private_school, F.col("Private") / F.col(total_school_count))\
         .withColumn(percentage_public_school, F.col("Public") / F.col(total_school_count))
-   
+
     starting_df.show() 
+   
+    columns = starting_df.columns()
+    
+    print(columns)
+    
    
     #distinct_counties = starting_df.select("County-State").distinct().collect()
     #print(len(distinct_counties))
