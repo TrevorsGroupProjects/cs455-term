@@ -64,11 +64,11 @@ class NeuralNetworkPyspark():
         return all_weights, views
 
     def collectMeansAndStandards(self, rdd):
-        self.Xmeans = rdd.map(lambda x: (np.mean(x[0], axis=0 ) ) ).collect()
-        self.Xstds = rdd.map(lambda x: (np.std(x[1], axis=0 ) ) ).collect()
+        self.Xmeans = rdd.reduce(lambda x: (np.mean(x[0], axis=0 ) ) )
+        self.Xstds = rdd.reduce(lambda x: (np.std(x[1], axis=0 ) ) )
         self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
-        self.Tmeans = rdd.map(lambda x: (np.mean(x[0], axis=0 ) ) ).collect()
-        self.Tstds = rdd.map(lambda x: (np.std(x[1], axis=0 ) ) ).collect()
+        self.Tmeans = rdd.reduce(lambda x: (np.mean(x[0], axis=0 ) ) )
+        self.Tstds = rdd.reduce(lambda x: (np.std(x[1], axis=0 ) ) )
         self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
         return self
     
