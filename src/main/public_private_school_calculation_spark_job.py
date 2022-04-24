@@ -61,10 +61,11 @@ if __name__ == "__main__":
     
     if len(arcgis_dfs) != 0:
         for adf in arcgis_dfs:
-            print(adf.count())
+            #Drop the schools that don't have a county
             adf = adf.na.drop(subset=["COUNTY"])
-            print(adf.show())
-            print(adf.count())
+            adf = adf.withColumn("County-State", F.concat_ws("-", F.upper(F.col("COUNTY")), F.col("STATE")))
+            adf.show()
+            
         
             
         
