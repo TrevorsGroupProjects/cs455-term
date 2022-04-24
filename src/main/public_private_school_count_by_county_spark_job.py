@@ -17,24 +17,34 @@ from subprocess import Popen, PIPE
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: public_private_school_calculation_spark_job.py <directory>", file=sys.stderr)
+    if len(sys.argv) != 3:
+        print("Usage: public_private_school_calculation_spark_job.py <directory> <private|public>", file=sys.stderr)
         sys.exit(-1)
         
     #file_path = "hdfs://cheyenne:41760/dropout_data/usa_drop_out_data.csv"
-
+    
     spark = SparkSession\
         .builder\
         .appName("Get Totals and Averages Of Schools Per District!")\
         .getOrCreate()
 
     directory_path = sys.argv[1]
-    print(directory_path)    
+    private_or_public = sys.argv[2]
+    #print(directory_path)    
 
     #This is assuming that you are not targeting an hdfs with an FQDN!
     if "." in directory_path:
         print("\n\n!!!!!!!Currently only targets Directories....EXITING!!!!!!\n\n")
         spark.stop()
+        sys.exit(-1)
+        
+    new_column_name = ""
+    if str(private_or_public).upper() == "PRIVATE":
+        new_column_name = "Private"
+    elif str(private_or_public).upper() == "PUBLIC":
+        new_column_name = "Public"
+    else:
+        print("Third input must be 'private' or 'public'")
         sys.exit(-1)
     
     hadoop_home = os.environ['HADOOP_HOME']
@@ -79,7 +89,13 @@ if __name__ == "__main__":
     
     #starting_df.show()
     #starting_df.write.option("header", True).csv(directory_path + "/MergedArcGISUrban")
-    count = starting_df.groupBy("County-State").agg()
+    #count = starting_df.groupBy("County-State").agg()
+    counts = starting_df.groupBy("County-State").count()
+    counts = counts.withColumn(new_column_name, F.col("count"))
+    counts.select("County-State", new_column_name)
+    counts.show()
+  
+    
     
         
             
