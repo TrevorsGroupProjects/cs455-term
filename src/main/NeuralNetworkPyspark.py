@@ -64,14 +64,43 @@ class NeuralNetworkPyspark():
         return all_weights, views
 
     def collectMeansAndStandards(self, rdd):
-        self.Xmeans = rdd.map(lambda x: (np.mean(x[:self.input_layer], axis=0 ) ) ).collect()
-        self.Xstds = rdd.map(lambda x: (np.std(x[:self.input_layer], axis=0 ) ) ).collect()
-        self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
-        self.Tmeans = rdd.map(lambda x: (np.mean(x[self.input_layer:], axis=0 ) ) ).collect()
-        self.Tstds = rdd.map(lambda x: (np.std(x[self.input_layer:], axis=0 ) ) ).collect()
-        self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
+        
+        self.Xmeans = []
+        for i in range(self.input_layer):
+            self.Xmeans.append(rdd.groupBy(lambda x: x[:self.input_layer]).map(lambda x: float(x[:1][0][i])).mean())
+            
+        self.Tmeans = []
+        for i in range(self.output_layer):
+            self.Tmeans.append(rdd.groupBy(lambda x: x[self.input_layer:]).map(lambda x: float(x[:1][0][i])).mean())
+        
+        self.Xstds = []
+        for i in range(self.input_layer):
+            self.Xstds.append(rdd.groupBy(lambda x: x[:self.input_layer]).map(lambda x: float(x[:1][0][i])).stdev())
+        
+        self.Tstds = []
+        for i in range(self.output_layer):
+            self.Tstds.append(rdd.groupBy(lambda x: x[self.input_layer:]).map(lambda x: float(x[:1][0][i])).stdev())
+        #numpy_from_rdd = np.array(rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect())
+
+        #means = np.mean(numpy_from_rdd, axis=0)
+        #self.Xmeans = means[:self.input_layer]
+        #self.Tmeans = means[self.input_layer:]
+        
+        #stds = np.std(numpy_from_rdd, axis=0)
+        #self.Xstds = stds[:self.input_layer]
+        #self.Tstds = stds[self.input_layer:]
+        #self.Xstds[self.Xstds == 0]
+        
+        #print(means)
+        #print(stds)
+        print(self.Xmeans)
+        print(self.Tmeans)
+        
+        print(self.Xstds)
+        print(self.Tstds)
+        
         return self
-    
+
     def standardizeX(self, X):
         return (X - self.Xmeans) / self.Xstds
 
