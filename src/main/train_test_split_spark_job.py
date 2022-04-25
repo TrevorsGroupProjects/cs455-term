@@ -55,9 +55,9 @@ if __name__ == "__main__":
     # print(output_columns)
     # x = df_reordered.select(input_columns)
     # x.show()
-
     # y = df_reordered.select(output_columns)
     # y.show()
+    
     for input_header in input_columns:
         columns.remove(input_header)
         columns.insert(0, input_header)
@@ -76,10 +76,9 @@ if __name__ == "__main__":
     test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
     
 
-    # print(rdd.take(1))
-    # print("Trainset size:", rdd.count())
-    # Xmeans = rdd.map(lambda x: x[1]).mean()
-    # print(Xmeans)
+    # print(train_rdd.take(1))
+    # print("Trainset size:", train_rdd.count())
+
     # nn.collectMeansAndStandards(rdd, verbose=True)
 
     # nn.train(train_rdd)
