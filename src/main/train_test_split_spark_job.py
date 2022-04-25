@@ -100,12 +100,17 @@ if __name__ == "__main__":
     #print(y_rdd.mapValues(lambda y: y).collect())
         
     nn.collectMeansAndStandards(rdd)            
+    
+   # def standardizeX(self, X):
+   #     return (X - self.Xmeans) / self.Xstds    
+
     #test = (rdd.map(lambda x: (x[:1], (x[1:]) ))).collect()
     #X_means = []
     #for i in range(n_inputs):
     #    X_means.append(rdd.groupBy(lambda x: x[:n_inputs]).map(lambda x: float(x[:1][0][i])).mean())
     
-    #print(rdd.groupBy(lambda x: x[n_inputs:]).map(lambda x: float(x[:1][0][0])).collect())    
+    #Testing standardize and unstandardize on one column
+    print(rdd.groupBy(lambda x: x[n_inputs:]).map(lambda x: (float(x[:1][0][0]) - nn.Xmeans[0]) / nn.Xstds[0]).map(lambda x: x * nn.Xstds[0] + nn.Xmeans[0]).collect())    
     
     #print(rdd.groupBy(lambda x: x[n_inputs:]).map(lambda x: float(x[n_inputs:][0][i])).collect())
 
