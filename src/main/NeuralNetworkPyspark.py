@@ -63,42 +63,18 @@ class NeuralNetworkPyspark():
             start += size
         return all_weights, views
 
-    def collectMeansAndStandards(self, rdd):
-        
-        self.Xmeans = []
-        for i in range(self.input_layer):
-            self.Xmeans.append(rdd.groupBy(lambda x: x[:self.input_layer]).map(lambda x: float(x[:1][0][i])).mean())
-            
-        self.Tmeans = []
-        for i in range(self.output_layer):
-            self.Tmeans.append(rdd.groupBy(lambda x: x[self.input_layer:]).map(lambda x: float(x[:1][0][i])).mean())
-        
-        self.Xstds = []
-        for i in range(self.input_layer):
-            self.Xstds.append(rdd.groupBy(lambda x: x[:self.input_layer]).map(lambda x: float(x[:1][0][i])).stdev())
-        
-        self.Tstds = []
-        for i in range(self.output_layer):
-            self.Tstds.append(rdd.groupBy(lambda x: x[self.input_layer:]).map(lambda x: float(x[:1][0][i])).stdev())
-        #numpy_from_rdd = np.array(rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect())
-
-        #means = np.mean(numpy_from_rdd, axis=0)
-        #self.Xmeans = means[:self.input_layer]
-        #self.Tmeans = means[self.input_layer:]
-        
-        #stds = np.std(numpy_from_rdd, axis=0)
-        #self.Xstds = stds[:self.input_layer]
-        #self.Tstds = stds[self.input_layer:]
-        #self.Xstds[self.Xstds == 0]
-        
-        #print(means)
-        #print(stds)
-        print(self.Xmeans)
-        print(self.Tmeans)
-        
-        print(self.Xstds)
-        print(self.Tstds)
-        
+    def collectMeansAndStandards(self, rdd, verbose=False):
+        self.Xmeans = rdd.map(lambda x: x[0]).mean()
+        self.Xstds = rdd.map(lambda x: x[0]).stdev()
+        self.Xstds[self.Xstds == 0] = 1  # So we don't divide by zero when standardizing
+        self.Tmeans = rdd.map(lambda x: x[1]).mean()
+        self.Tstds = rdd.map(lambda x: x[1]).stdev()
+        self.Tstds[self.Tstds == 0] = 1  # So we don't divide by zero when standardizing
+        if verbose:
+            print(self.Xmeans)
+            print(self.Tmeans)
+            print(self.Xstds)
+            print(self.Tstds)
         return self
 
     def standardizeX(self, X):
@@ -150,16 +126,16 @@ class NeuralNetworkPyspark():
         for W in self.Ws[:-1]:
             forward = forward.map(
                 lambda x: (
-                    x[:i], 
+                    *x[:i+1], 
                     self.preforward(x[i], W[1:, :], W[0:1, :]), 
-                    x[i+1]
+                    *x[-1:]
                 )
             )\
             .map(
                 lambda x: (
-                    x[:i+1], 
+                    *x[:i+2], 
                     self.activation(x[i+1], act), 
-                    x[i+2]
+                    *x[-1:]
                 )
             )
             i += 1
@@ -178,25 +154,25 @@ class NeuralNetworkPyspark():
         # Compute the error from the output layer
         # map the cost to the output -1 position,
         # the derivative of the output bias to the output position,
-        # and map the mean square error to the output +1 position
+        # and map the mean square error to the end position
         backward = X.map(
             lambda x: (
-                x[:n_layers-1], 
-                self.sse(x[n_layers], x[n_layers+1]), 
+                *x[:n_layers - 1], 
+                self.sse(x[n_layers], x[-1]), 
                 self.derivativeBias2(x[n_layers], x[n_layers+1], x[n_layers-1], der), 
-                self.mse(x[n_layers], x[n_layers+1])
+                self.mse(x[n_layers], x[-1])
             )
         )
         # Step backwards through the layers to compute the gradient derivatives
         for layeri in range(n_layers - 2, 1, -2):
             backward = backward.map(
-                lambda x: (x[:layeri], self.derivativeWeights(x[layeri-1], x[-2]) ,x[-1])
+                lambda x: (*x[:layeri + 1], *x[layeri+2:-1], self.derivativeWeights(x[layeri+1], x[-2]) ,*x[-1:])
             )\
             .map(
-                lambda x: (x[:layeri], self.derivativeBias1(x[layeri-2], x[layeri], self.Ws[layeri/2][1:, :], der) ,x[-1])
+                lambda x: (*x[:layeri],*x[layeri+1:-1], self.derivativeBias1(x[layeri], x[-2], self.Ws[layeri/2][1:, :], der) ,*x[-1:])
             )
         # Compute the final derivative
-        backward = backward.map(lambda x: (x[1:n_layers], self.derivativeWeights(x[0], x[-2]) ,x[-1], 1))
+        backward = backward.map(lambda x: (*x[1:n_layers + 1], self.derivativeWeights(x[0], x[-2]) ,*x[-1:], 1))
         return backward
 
     # Compute the derivative of the error regarding biases
@@ -222,7 +198,7 @@ class NeuralNetworkPyspark():
         return mean_sq_error
 
     '''Training functions'''
-    def train(self, train_rdd, num_epochs=50, learning_rate=0.1, verbose=True):
+    def train(self, train_rdd, num_epochs=1, learning_rate=0.1, verbose=True):
         # Setup standardization parameters
         if self.Xmeans is None:
             self.collectMeansAndStandards(train_rdd)
@@ -242,30 +218,30 @@ class NeuralNetworkPyspark():
             # Compute gradients, cost, and error over mini batch 
             forward_rdd = self.forward_pass(train_rdd.sample(False,0.7))
             backward_rdd = self.backward_pass(forward_rdd)
-            gradientCostAcc = backward_rdd.reduce(lambda x, y: [x[i] + y[i] for i in range(len(x))])
+            # gradientCostAcc = backward_rdd.reduce(lambda x, y: [x[i] + y[i] for i in range(len(x))])
 
-            # Cost and Error of the mini batch
-            n = gradientCostAcc[-1] # number of samples in the mini batch
-            cost = gradientCostAcc[0]/n # Cost over the mini batch
-            acc = gradientCostAcc[-2]/n # Mean squared error over the mini batch
+            # # Cost and Error of the mini batch
+            # n = gradientCostAcc[-1] # number of samples in the mini batch
+            # cost = gradientCostAcc[0]/n # Cost over the mini batch
+            # acc = gradientCostAcc[-2]/n # Mean squared error over the mini batch
             
-            # Add to history
-            cost_history.append(cost)
-            acc_history.append(acc)
+            # # Add to history
+            # cost_history.append(cost)
+            # acc_history.append(acc)
             
-            # Extract gradients
-            layeri = len(self.n_hiddens_per_layer)
-            for i in range(1, len(gradientCostAcc)-2, 2):
-                self.dE_dWs[layeri][1:, :] = gradientCostAcc[i]
-                self.dE_dWs[layeri][0:1, :] = gradientCostAcc[i+1]
-                layeri -= 1
+            # # Extract gradients
+            # layeri = len(self.n_hiddens_per_layer)
+            # for i in range(1, len(gradientCostAcc)-2, 2):
+            #     self.dE_dWs[layeri][1:, :] = gradientCostAcc[i]
+            #     self.dE_dWs[layeri][0:1, :] = gradientCostAcc[i+1]
+            #     layeri -= 1
                     
-            # Update parameters with learning rate and gradients using Gradient Descent
-            self.all_weights -= learning_rate * self.all_gradients
+            # # Update parameters with learning rate and gradients using Gradient Descent
+            # self.all_weights -= learning_rate * self.all_gradients
 
-            # Display performance
-            if verbose:
-                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]*100} | Batchsize:{n}")
+            # # Display performance
+            # if verbose:
+            #     print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]*100} | Batchsize:{n}")
 
         print("Training end..")
         self.trained = True
@@ -275,12 +251,13 @@ class NeuralNetworkPyspark():
     def use(self, use_rdd):
         # Use the trained model over the use_rdd
         if self.trained:
-            use_rdd = use_rdd.map(lambda x: (self.standardizeX(x[:self.input_layer]), self.standardizeT(x[self.input_layer:]) ))
+            use_rdd = use_rdd.map(lambda x: (self.standardizeX(x[0]), self.standardizeT(x[1]) ))
         result = self.forward_pass(use_rdd)
+        result = result.map(lambda x: (x[-2]))
         if self.trained:
             def unstandardize(Y):
                 return Y * self.Tstds + self.Tmeans
-            result = result.map(lambda x: (x[:-2], unstandardize(x[-2]), x[-1]))
+            result = result.map(lambda x: (unstandardize(x)))
         result = result.collect()
-        return result[-2]
+        return result
         
