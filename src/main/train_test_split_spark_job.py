@@ -70,10 +70,11 @@ if __name__ == "__main__":
     #print(os.getcwd())
      
     nn = npys.NeuralNetworkPyspark(n_inputs, n_outputs)
-    
-    rdd = df_reordered.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
+    train, test = df_reordered.randomSplit([0.8, 0.2], seed=42)
 
-    rdd.cache()
+    train_rdd = train.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
+    test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
+    
 
     # print(rdd.take(1))
     # print("Trainset size:", rdd.count())
@@ -81,9 +82,9 @@ if __name__ == "__main__":
     # print(Xmeans)
     # nn.collectMeansAndStandards(rdd, verbose=True)
 
-    nn.train(rdd)
+    # nn.train(train_rdd)
     
-    print("\n\n!!!DONE!!!")
+    print("\n\n!!!DONE!!!\n\n")
     spark.stop()
 
 
