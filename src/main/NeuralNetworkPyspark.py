@@ -123,18 +123,14 @@ class NeuralNetworkPyspark():
         i = 0
         for W in self.Ws:
             forward = forward.map(
-                lambda x: (
+                lambda x, i=i: (
                     *x[:i+1], 
-                    self.preforward(
-                        x[i], 
-                        W[1:, :], 
-                        W[0:1, :]
-                    ), 
+                    x[i] @ W[1:, :] + W[0:1, :], 
                     *x[-1:]
                 )
             )\
             .map(
-                lambda x: (
+                lambda x, i=i: (
                     *x[:i+2], 
                     self.activation(x[i+1], act), 
                     *x[-1:]
@@ -168,10 +164,10 @@ class NeuralNetworkPyspark():
         # Step backwards through the layers to compute the gradient derivatives
         for layeri in range(n_layers - 2, 1, -2):
             backward = backward.map(
-                lambda x: (*x[:layeri + 1], *x[layeri+2:-1], self.derivativeWeights(x[layeri+1], x[-2]) ,*x[-1:])
+                lambda x, layeri=layeri: (*x[:layeri + 1], *x[layeri+2:-1], self.derivativeWeights(x[layeri+1], x[-2]) ,*x[-1:])
             )\
             .map(
-                lambda x: (*x[:layeri],*x[layeri+1:-1], self.derivativeBias1(x[layeri], x[-2], self.Ws[layeri/2][1:, :], der) ,*x[-1:])
+                lambda x, layeri=layeri: (*x[:layeri],*x[layeri+1:-1], self.derivativeBias1(x[layeri], x[-2], self.Ws[layeri/2][1:, :], der) ,*x[-1:])
             )
         # Compute the final derivative
         backward = backward.map(lambda x: (*x[1:n_layers + 1], self.derivativeWeights(x[0], x[-2]) ,*x[-1:], 1))
@@ -218,7 +214,7 @@ class NeuralNetworkPyspark():
         for epoch in range(num_epochs):
             
             # Compute gradients, cost, and error over mini batch 
-            forward_rdd = self.forward_pass(train_rdd.sample(False,0.7))
+            forward_rdd = self.forward_pass(train_rdd)
             print(forward_rdd.collect())
             # backward_rdd = self.backward_pass(forward_rdd)
             # gradientCostAcc = backward_rdd.sum()
