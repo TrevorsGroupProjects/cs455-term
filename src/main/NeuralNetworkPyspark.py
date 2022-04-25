@@ -47,6 +47,11 @@ class NeuralNetworkPyspark():
         self.Tmeans = None
         self.Tstds = None
 
+    def printWeights(self):
+        for W in self.Ws:
+            print(W)
+            print(W.shape)
+
     def make_weights_and_views(self, shapes):
         # vector of all weights built by horizontally stacking flatenned matrices
         # for each layer initialized with uniformly-distributed values.
@@ -110,9 +115,6 @@ class NeuralNetworkPyspark():
     
     '''Forward Pass functions'''
     # Compute the layer propagation without activation
-    def preforward(self, X, w, b):
-        return np.dot(X, w) + b
-
     def forward_pass(self, forward):
         if self.act_func=='tanh':
             act = self.tanh
@@ -123,7 +125,7 @@ class NeuralNetworkPyspark():
         i = 0
         for W in self.Ws:
             forward = forward.map(
-                lambda x, i=i: (
+                lambda x, i=i, W=W: (
                     *x[:i+1], 
                     x[i] @ W[1:, :] + W[0:1, :], 
                     *x[-1:]
@@ -167,7 +169,7 @@ class NeuralNetworkPyspark():
                 lambda x, layeri=layeri: (*x[:layeri + 1], *x[layeri+2:-1], self.derivativeWeights(x[layeri+1], x[-2]) ,*x[-1:])
             )\
             .map(
-                lambda x, layeri=layeri: (*x[:layeri],*x[layeri+1:-1], self.derivativeBias1(x[layeri], x[-2], self.Ws[layeri/2][1:, :], der) ,*x[-1:])
+                lambda x, layeri=layeri: (*x[:layeri],*x[layeri+1:-1], self.derivativeBias1(x[layeri], x[-2], self.Ws[int(layeri/2)][1:, :], der) ,*x[-1:])
             )
         # Compute the final derivative
         backward = backward.map(lambda x: (*x[1:n_layers + 1], self.derivativeWeights(x[0], x[-2]) ,*x[-1:], 1))
@@ -215,8 +217,8 @@ class NeuralNetworkPyspark():
             
             # Compute gradients, cost, and error over mini batch 
             forward_rdd = self.forward_pass(train_rdd)
-            print(forward_rdd.collect())
-            # backward_rdd = self.backward_pass(forward_rdd)
+            backward_rdd = self.backward_pass(forward_rdd)
+            print(backward_rdd.take(1))
             # gradientCostAcc = backward_rdd.sum()
 
             # # Cost and Error of the mini batch
