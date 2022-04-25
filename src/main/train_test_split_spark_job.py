@@ -80,7 +80,7 @@ if __name__ == "__main__":
     #x_rdd = x.rdd
     #y_rdd = y.rdd
     
-    #import numpy as np
+    import numpy as np
     #print(rdd.map(lambda x: (np.mean(x[0], axis=0 ) ) ))
     #y_test = y_rdd.map(lambda v: np.mean([float(v[i]) for i in range(len(v))], axis=0))
     #y = np.array(y_rdd.map(lambda v: [float(v[i]) for i in range(len(v))]).collect())
@@ -99,12 +99,25 @@ if __name__ == "__main__":
     #print(x_rdd.mean())   
     #print(y_rdd.mapValues(lambda y: y).collect())
         
-
-
     nn.collectMeansAndStandards(rdd)            
     #test = (rdd.map(lambda x: (x[:1], (x[1:]) ))).collect()
-    X_stds = (rdd.groupBy(lambda x: x[:1]).map(lambda x: x[:1][0][0])).collect()
-    print(X_stds)
+    #X_means = []
+    #for i in range(n_inputs):
+    #    X_means.append(rdd.groupBy(lambda x: x[:n_inputs]).map(lambda x: float(x[:1][0][i])).mean())
+    
+    #print(rdd.groupBy(lambda x: x[n_inputs:]).map(lambda x: float(x[:1][0][0])).collect())    
+    
+    #print(rdd.groupBy(lambda x: x[n_inputs:]).map(lambda x: float(x[n_inputs:][0][i])).collect())
+
+    #T_means = []
+    #for i in range(n_outputs):
+    #    T_means.append(rdd.groupBy(lambda x: x[n_inputs:]).map(lambda x: float(x[:1][0][i])).mean())
+    #t2  = rdd.groupBy(lambda x: x[:n_inputs]).map(lambda x: float(x[:n_inputs][0][1])).mean()
+    #X_means = rdd.groupBy(lambda x: x[:2]).map(lambda x: float(x[:2][0][0])).mean()
+    #X_means = (rdd.groupBy(lambda x: x[:2]).map(lambda x: [float(x[:2][0][i]) for i in range(len(x[:2][0]))]).foreach(print)).collect()
+    #print(t)
+    #print(X_means)
+    #print(T_means)
     #nn.train(rdd)
     print("\n\n!!!DONE!!!")
     spark.stop()
