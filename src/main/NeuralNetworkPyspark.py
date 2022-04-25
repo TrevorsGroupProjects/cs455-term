@@ -15,7 +15,6 @@ class NeuralNetworkPyspark():
     '''Initialization functions'''
     def __init__(self, n_inputs, n_outputs, n_hiddens_per_layer=[3, 10, 10], activation_function='tanh'):
         self.input_layer = n_inputs # number of neurons in the input layer
-        self.hidden_layer = n_hiddens_per_layer # list of number of neurons in each of the hidden layers
         self.output_layer = n_outputs # number of neurons in the output layer
         self.act_func = activation_function # activation function
 
@@ -114,7 +113,7 @@ class NeuralNetworkPyspark():
     def preforward(self, X, w, b):
         return np.dot(X, w) + b
 
-    def forward_pass(self, X):
+    def forward_pass(self, forward):
         if self.act_func=='tanh':
             act = self.tanh
         elif self.act_func == 'sig':
@@ -122,12 +121,15 @@ class NeuralNetworkPyspark():
         else:
             act = self.relu
         i = 0
-        forward = X
-        for W in self.Ws[:-1]:
+        for W in self.Ws:
             forward = forward.map(
                 lambda x: (
                     *x[:i+1], 
-                    self.preforward(x[i], W[1:, :], W[0:1, :]), 
+                    self.preforward(
+                        x[i], 
+                        W[1:, :], 
+                        W[0:1, :]
+                    ), 
                     *x[-1:]
                 )
             )\
@@ -138,7 +140,7 @@ class NeuralNetworkPyspark():
                     *x[-1:]
                 )
             )
-            i += 1
+            i += 2
         return forward
 
     '''Backward propogation functions'''
@@ -204,7 +206,7 @@ class NeuralNetworkPyspark():
             self.collectMeansAndStandards(train_rdd)
         
         # Standardize X and T
-        train_rdd = train_rdd.map(lambda x: (self.standardizeX(x[:self.input_layer]), self.standardizeT(x[self.input_layer:]) ))
+        train_rdd = train_rdd.map(lambda x: (self.standardizeX(x[0]), self.standardizeT(x[1]) ))
 
         # History over epochs
         cost_history = []
@@ -217,8 +219,9 @@ class NeuralNetworkPyspark():
             
             # Compute gradients, cost, and error over mini batch 
             forward_rdd = self.forward_pass(train_rdd.sample(False,0.7))
-            backward_rdd = self.backward_pass(forward_rdd)
-            # gradientCostAcc = backward_rdd.reduce(lambda x, y: [x[i] + y[i] for i in range(len(x))])
+            print(forward_rdd.collect())
+            # backward_rdd = self.backward_pass(forward_rdd)
+            # gradientCostAcc = backward_rdd.sum()
 
             # # Cost and Error of the mini batch
             # n = gradientCostAcc[-1] # number of samples in the mini batch
