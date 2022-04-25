@@ -102,6 +102,10 @@ if __name__ == "__main__":
 
 
     nn.collectMeansAndStandards(rdd)            
+    #test = (rdd.map(lambda x: (x[:1], (x[1:]) ))).collect()
+    X_stds = (rdd.groupBy(lambda x: x[:1]).map(lambda x: x[:1][0][0])).collect()
+    print(X_stds)
+    #nn.train(rdd)
     print("\n\n!!!DONE!!!")
     spark.stop()
 

@@ -74,6 +74,10 @@ class NeuralNetworkPyspark():
         self.Xstds = stds[:self.input_layer]
         self.Tstds = stds[self.input_layer:]
         self.Xstds[self.Xstds == 0]
+        
+        print(means)
+        print(stds)
+        
         return self
 
     def standardizeX(self, X):
