@@ -12,7 +12,6 @@ from pyspark.mllib.util import MLUtils
 
 import NeuralNetworkPyspark
 
-
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: predict_from_svi.py <file>", file=sys.stderr)
