@@ -172,7 +172,7 @@ class NeuralNetworkPyspark():
                 lambda x, layeri=layeri: (*x[:layeri],*x[layeri+1:-1], self.derivativeBias1(x[layeri], x[-2], self.Ws[int(layeri/2)][1:, :], der) ,*x[-1:])
             )
         # Compute the final derivative
-        backward = backward.map(lambda x: (*x[1:n_layers + 1], self.derivativeWeights(x[0], x[-2]) ,*x[-1:], 1))
+        backward = backward.map(lambda x: (*x[1:n_layers + 1], self.derivativeWeights(x[1], x[-2]) ,*x[-1:], 1))
         return backward
 
     # Compute the derivative of the error regarding biases
