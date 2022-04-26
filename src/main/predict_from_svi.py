@@ -17,16 +17,10 @@ if __name__ == "__main__":
         print("Usage: predict_from_svi.py <file>", file=sys.stderr)
         sys.exit(-1)
 
-    # Handle Arguments
-    input_path = sys.argv[3]
-    hdfs = "spark://" + sys.argv[1] + ":" + sys.argv[2]
-    output_path = sys.argv[4]
-
-    # Create Spark Session
-    spark = SparkSession.builder.master(hdfs).appName("PredictFromSVI").getOrCreate()
-
-    # Read and Process Graduation Data into RDD
-    grad_rdd = processGradData(spark, f"{input_path}/grad_data", f"{output_path}/grad_out")
+    spark = SparkSession\
+        .builder\
+        .appName("PredictEducation")\
+        .getOrCreate()
 
     # Reads into a dataframe.
     # Need to figure out the format.
