@@ -10,60 +10,7 @@ from pyspark.ml.linalg import Vectors
 from pyspark.mllib.stat import Statistics
 from pyspark.mllib.util import MLUtils
 
-def adjustCounties(county_string):
-    if county_string[len(county_string)-7:len(county_string)] == ' County':
-        county_string = county_string[0:len(county_string)-7]
-    return county_string.upper()
-
-def processGradData(spark, input_folder_path, output_folder):
-    # Load Data Into RDD
-    rdd = spark.sparkContext.textFile(f'{input_folder_path}', minPartitions=15)
-
-    # Split Entries Into Columns
-    rdd = rdd.map(lambda x: x.split(","), preservesPartitioning=True)
-
-    # Keep Only Relevant Columns:
-    # 3 = State Abbreviation
-    # 4 = County
-    # 88 = Graduation Rate
-    rdd = rdd.map(lambda x: [x[4], x[3], x[88]], preservesPartitioning=True)
-
-    # Separate Headers From RDD
-    rdd = rdd.zipWithIndex().filter(lambda tup: tup[1] > 0).map(lambda tup: tup[0], preservesPartitioning=True)
-    header = rdd.first()
-    rdd = rdd.zipWithIndex().filter(lambda tup: tup[1] > 0).map(lambda tup: tup[0], preservesPartitioning=True)
-
-    # Remove Non-County Entries
-    df = spark.createDataFrame(rdd, header)
-    nonstate_list = ['US', 'State Abbreviation', 'state']
-    noncounty_list = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho',
-        'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
-        'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio',
-        'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia',
-        'Washington', 'West Virginia', 'Wisconsin', 'Wyoming']
-    for string in nonstate_list:
-        df = df.filter(df.state != string)
-    for string in noncounty_list:
-        df = df.filter(df.county != string)
-
-    # Format The County and State Columns
-    rdd = df.rdd.map(lambda x: (adjustCounties(x[0])+"-"+x[1], x[2]), preservesPartitioning=True)
-
-    # Write DataFrame to CSV File
-    # TODO: Implement This!
-
-    # # Turn Back Into CSV Format
-    # def toCSVLine(data):
-    #     return ','.join(str(d) for d in data)
-
-    # rdd = rdd.map(toCSVLine)
-
-    # # Save RDD to HDFS
-    # rdd = rdd.coalesce(1)
-    # rdd.saveAsTextFile(output_folder)
-
-    # Return the RDD
-    return rdd
+import NeuralNetworkPyspark
 
 
 if __name__ == "__main__":
@@ -84,14 +31,25 @@ if __name__ == "__main__":
 
     # Reads into a dataframe.
     # Need to figure out the format.
-    # df = spark.read.format("libsvm").load(input_path).cache()
-
-    # dataFrame = spark.createDataFrame([
-    #     (0, Vectors.dense([1.0, 0.5, -1.0]),),
-    #     (1, Vectors.dense([2.0, 1.0, 1.0]),),
-    #     (2, Vectors.dense([4.0, 10.0, 2.0]),)
-    # ], ["id", "features"])
-
-    # newFrame.coalesce(1).write.csv(output_path) # ouptut to file
+    #df = spark.read.format("libsvm").load(input_path).cache()
+    
+    df = spark.read.option("header", True).csv(input_file)
+    
+    df = df.drop("County-State")
+    
+    columns = df.columns
+    
+    print(columns)
+    
+    if "SVI" in columns:
+        columns = columns.remove("SVI")
+        columns.insert(0, "SVI")
+        df_reordered = df.select(columns)
+        df_reordered.show()
+    else:
+        print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
+        sys.exit(-1)
+        
+    
 
     spark.stop()
