@@ -14,8 +14,8 @@ import NeuralNetworkPyspark
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("Usage: predict_from_svi.py <hostname> <port> <input_path> <output_path>", file=sys.stderr)
+    if len(sys.argv) != 2:
+        print("Usage: predict_from_svi.py <file>", file=sys.stderr)
         sys.exit(-1)
 
     # Handle Arguments
