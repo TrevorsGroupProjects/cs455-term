@@ -150,29 +150,29 @@ class NeuralNetworkPyspark():
             der = self.sigmoid_prime
         else:
             der = self.relu_prime
-        n_layers = 2 * (len(self.n_hiddens_per_layer) + 1)
+        n_layers = 2 * (len(self.n_hiddens_per_layer))
         # Compute the error from the output layer
         # map the cost to the output -1 position,
         # the derivative of the output bias to the output position,
         # and map the mean square error to the end position
         backward = X.map(
             lambda x: (
-                *x[:n_layers - 1], 
-                self.sse(x[n_layers], x[-1]), 
-                self.derivativeBias2(x[n_layers], x[n_layers+1], x[n_layers-1], der), 
-                self.mse(x[n_layers], x[-1])
+                *x[:-3], 
+                self.sse(x[-2], x[-1]), 
+                self.derivativeBias2(x[-2], x[-1], x[-3], der), 
+                self.mse(x[-2], x[-1])
             )
         )
         # Step backwards through the layers to compute the gradient derivatives
-        for layeri in range(n_layers - 2, 1, -2):
+        for layeri in range(n_layers, 1, -2):
             backward = backward.map(
-                lambda x, layeri=layeri: (*x[:layeri + 1], *x[layeri+2:-1], self.derivativeWeights(x[layeri+1], x[-2]) ,*x[-1:])
-            )\
-            .map(
-                lambda x, layeri=layeri: (*x[:layeri],*x[layeri+1:-1], self.derivativeBias1(x[layeri], x[-2], self.Ws[int(layeri/2)][1:, :], der) ,*x[-1:])
+                lambda x, layeri=layeri: (*x[:layeri], *x[layeri+1:-1], self.derivativeWeights(x[layeri], x[-2]) ,*x[-1:])
+            )
+            backward = backward.map(
+                lambda x, layeri=layeri: (*x[:layeri-1],*x[layeri:-1], self.derivativeBias1(x[layeri], x[-3], self.Ws[layeri//2][1:, :], der) ,*x[-1:])
             )
         # Compute the final derivative
-        backward = backward.map(lambda x: (*x[1:n_layers + 1], self.derivativeWeights(x[1], x[-2]) ,*x[-1:], 1))
+        backward = backward.map(lambda x: (*x[1:-1], self.derivativeWeights(x[0], x[-2]) ,*x[-1:], 1))
         return backward
 
     # Compute the derivative of the error regarding biases
@@ -184,8 +184,8 @@ class NeuralNetworkPyspark():
         return (y_pred - y_true) * f_prime(y_h)
 
     # Compute the derivative of the error regarding Weights
-    def derivativeWeights(self, h, dB):
-        return np.dot(h.T, dB)
+    def derivativeWeights(self, layer, dB):
+        return np.dot(layer.T, dB)
 
     '''Evalutaion functions'''
     # Cost (sum of squared errors) function
@@ -198,14 +198,14 @@ class NeuralNetworkPyspark():
         return mean_sq_error
 
     '''Training functions'''
-    def train(self, train_rdd, num_epochs=1, learning_rate=0.1, verbose=True):
+    def train(self, train_rdd, num_epochs=50, learning_rate=0.1, verbose=True):
         # Setup standardization parameters
         if self.Xmeans is None:
             self.collectMeansAndStandards(train_rdd)
-        
+        print("Standardizing X and T...")
         # Standardize X and T
         train_rdd = train_rdd.map(lambda x: (self.standardizeX(x[0]), self.standardizeT(x[1]) ))
-
+        print("X and T have been standardized.")
         # History over epochs
         cost_history = []
         acc_history = []
@@ -216,33 +216,40 @@ class NeuralNetworkPyspark():
         for epoch in range(num_epochs):
             
             # Compute gradients, cost, and error over mini batch 
+            # print("Running a forward pass")
             forward_rdd = self.forward_pass(train_rdd)
+            # print("Running a backward pass")
             backward_rdd = self.backward_pass(forward_rdd)
-            print(backward_rdd.take(1))
-            # gradientCostAcc = backward_rdd.sum()
+            # print("Collecting results")
+            def tupleAdder(tuple1, tuple2):
+                return tuple(map(lambda x, y: x + y, tuple1, tuple2))
+            gradientCostAcc = backward_rdd.reduce(lambda x,y: tupleAdder(x,y))
 
-            # # Cost and Error of the mini batch
-            # n = gradientCostAcc[-1] # number of samples in the mini batch
-            # cost = gradientCostAcc[0]/n # Cost over the mini batch
-            # acc = gradientCostAcc[-2]/n # Mean squared error over the mini batch
+            # Cost and Error of the mini batch
+            n = gradientCostAcc[-1] # number of samples in the mini batch
+            cost = gradientCostAcc[0]/n # Cost over the mini batch
+            acc = gradientCostAcc[-2]/n # accuracy over the mini batch
             
-            # # Add to history
-            # cost_history.append(cost)
-            # acc_history.append(acc)
-            
-            # # Extract gradients
-            # layeri = len(self.n_hiddens_per_layer)
-            # for i in range(1, len(gradientCostAcc)-2, 2):
-            #     self.dE_dWs[layeri][1:, :] = gradientCostAcc[i]
-            #     self.dE_dWs[layeri][0:1, :] = gradientCostAcc[i+1]
-            #     layeri -= 1
+            # print(len(gradientCostAcc))
+
+            # Add to history
+            cost_history.append(cost)
+            acc_history.append(acc)
+
+            # Extract gradients
+            r_bias_and_weight =  list(reversed(gradientCostAcc[1:-2]))
+            i = 0
+            for dW in self.dE_dWs:
+                dW[1:, :] = r_bias_and_weight[i]
+                dW[0:1, :] = r_bias_and_weight[i+1]
+                i += 2
                     
-            # # Update parameters with learning rate and gradients using Gradient Descent
-            # self.all_weights -= learning_rate * self.all_gradients
+            # Update parameters with learning rate and gradients using Gradient Descent
+            self.all_weights -= learning_rate * self.all_gradients
 
-            # # Display performance
-            # if verbose:
-            #     print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]*100} | Batchsize:{n}")
+            # Display performance
+            if verbose:
+                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]*100} | Batchsize:{n}")
 
         print("Training end..")
         self.trained = True
