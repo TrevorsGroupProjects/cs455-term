@@ -32,7 +32,7 @@ if __name__ == "__main__":
         .getOrCreate()
     
     spark.sparkContext.addPyFile("./src/main/NeuralNetworkPyspark.py")
-    
+    spark.sparkContext.setLogLevel("WARN")
 
     input_path = sys.argv[1]
     # output_path = sys.argv[2]
