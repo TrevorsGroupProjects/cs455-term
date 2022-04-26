@@ -249,7 +249,7 @@ class NeuralNetworkPyspark():
 
             # Display performance
             if verbose:
-                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]*100} | Batchsize:{n}")
+                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]} | Batchsize:{n}")
 
         print("Training end..")
         self.trained = True
