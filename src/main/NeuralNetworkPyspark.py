@@ -160,7 +160,7 @@ class NeuralNetworkPyspark():
                 *x[:-3], 
                 self.sse(x[-2], x[-1]), 
                 self.derivativeBias2(x[-2], x[-1], x[-3], der), 
-                self.mse(x[-2], x[-1])
+                x[-2] - x[-1]
             )
         )
         # Step backwards through the layers to compute the gradient derivatives
@@ -240,8 +240,8 @@ class NeuralNetworkPyspark():
             r_bias_and_weight =  list(reversed(gradientCostAcc[1:-2]))
             i = 0
             for dW in self.dE_dWs:
-                dW[1:, :] = r_bias_and_weight[i]
-                dW[0:1, :] = r_bias_and_weight[i+1]
+                dW[1:, :] = r_bias_and_weight[i]/n
+                dW[0:1, :] = r_bias_and_weight[i+1]/n
                 i += 2
                     
             # Update parameters with learning rate and gradients using Gradient Descent
@@ -249,7 +249,7 @@ class NeuralNetworkPyspark():
 
             # Display performance
             if verbose:
-                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]*100} | Batchsize:{n}")
+                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]} | Batchsize:{n}")
 
         print("Training end..")
         self.trained = True
