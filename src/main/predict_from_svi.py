@@ -22,6 +22,8 @@ if __name__ == "__main__":
         .appName("PredictEducation")\
         .getOrCreate()
 
+    input_path = sys.argv[1]
+    # output_path = sys.argv[2]
     # Reads into a dataframe.
     # Need to figure out the format.
     #df = spark.read.format("libsvm").load(input_path).cache()
