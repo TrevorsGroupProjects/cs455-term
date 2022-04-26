@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # x.show()
     # y = df_reordered.select(output_columns)
     # y.show()
-    
+
     for input_header in input_columns:
         columns.remove(input_header)
         columns.insert(0, input_header)
@@ -70,18 +70,21 @@ if __name__ == "__main__":
     #print(os.getcwd())
      
     nn = npys.NeuralNetworkPyspark(n_inputs, n_outputs)
+    # nn.printWeights()
+
     train, test = df_reordered.randomSplit([0.8, 0.2], seed=42)
 
     train_rdd = train.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
-    test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
+    # test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
     
 
     # print(train_rdd.take(1))
-    # print("Trainset size:", train_rdd.count())
+    # print("Train set size:", train_rdd.count())
+    # print("Test set size:", test_rdd.count())
 
-    # nn.collectMeansAndStandards(rdd, verbose=True)
+    # nn.collectMeansAndStandards(train_rdd, verbose=True)
 
-    # nn.train(train_rdd)
+    nn.train(train_rdd)
     
     print("\n\n!!!DONE!!!\n\n")
     spark.stop()
