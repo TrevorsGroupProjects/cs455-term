@@ -2,6 +2,8 @@ import os
 import sys
 import tempfile
 import shutil
+import pickle
+import numpy as np
 
 from pyspark.sql import SparkSession
 from pyspark.ml.classification import LogisticRegression
@@ -13,38 +15,39 @@ from pyspark.mllib.util import MLUtils
 import NeuralNetworkPyspark
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: predict_from_svi.py <file>", file=sys.stderr)
+    if len(sys.argv) != 3:
+        print("Usage: predict_from_svi.py <neural_network_file> <test_data_file>", file=sys.stderr)
         sys.exit(-1)
 
     spark = SparkSession\
         .builder\
         .appName("PredictEducation")\
         .getOrCreate()
+        
+    spark.sparkContext.setLogLevel("WARN")
+    spark.sparkContext.addPyFile("./src/main/NeuralNetworkPyspark.py")
 
-    input_path = sys.argv[1]
-    # output_path = sys.argv[2]
-    # Reads into a dataframe.
-    # Need to figure out the format.
-    #df = spark.read.format("libsvm").load(input_path).cache()
+    nn_path = sys.argv[1]
+    input_file = sys.argv[2]
     
     df = spark.read.option("header", True).csv(input_file)
     
-    df = df.drop("County-State")
-    
+
+    input_columns = ["SVI"] 
     columns = df.columns
+
+    output_columns = [col for col in columns if col not in input_columns]           
+ 
     
-    print(columns)
-    
-    if "SVI" in columns:
-        columns = columns.remove("SVI")
-        columns.insert(0, "SVI")
-        df_reordered = df.select(columns)
-        df_reordered.show()
-    else:
-        print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
-        sys.exit(-1)
+    with open(nn_path, 'rb') as nnpkl:
+        nn = pickle.load(nnpkl)
         
+    test_rdd = df.rdd.map(lambda x: (np.array([x[:len(input_columns)]]).astype(np.float), np.array([x[len(input_columns):]]).astype(np.float)))
+    y_test = nn.use(test_rdd)
+    #print(y_test)
     
+    print(nn.cost_history)
+    print("\n\n")
+    print(nn.acc_history)
 
     spark.stop()

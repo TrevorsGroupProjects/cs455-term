@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr 26 21:01:18 2022
+
+@author: Rene
+"""
 import os
 import sys
 import tempfile
@@ -10,14 +16,14 @@ from pyspark.sql import SparkSession
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: dropout_data_spark_job.py <file>", file=sys.stderr)
+        print("Usage: mean_household_data_spark_job.py <file>", file=sys.stderr)
         sys.exit(-1)
         
     #file_path = "hdfs://cheyenne:41760/dropout_data/usa_drop_out_data.csv"
 
     spark = SparkSession\
         .builder\
-        .appName("USA Dropout Refinement")\
+        .appName("USA Median Household Refinement")\
         .getOrCreate()
 
     input_path = sys.argv[1]
@@ -79,23 +85,33 @@ if __name__ == "__main__":
                                    "Wisconsin": "WI",
                                    "Wyoming": "WY"}
     
+    
+    
     #Add a new column for the county and state postal abbrev
     #df["County-State"] = df["County"] + state_by_state_postal_codes[df["State"]]
     from itertools import chain    
 
     mapping_expr = F.create_map([F.lit(x) for x in chain(*state_by_state_postal_codes.items())])
     
+    df = df.withColumn("County", F.regexp_replace(F.col("NAME"), 'County', ''))
+    #df.show()
+    
     df = df.withColumn("County-State", F.concat_ws("-", F.upper(F.trim(F.col("County"))), mapping_expr.getItem(F.col("State"))))
-    df.show()
+    #df.show()
     
-    columns_to_drop = ["_c0","Name", "State", "Total Population 16 to 19 Years", "Total_Male_Dropout", "Total_Female_Dropout", "Total_Dropout", "County"]
-    df = df.withColumn("Drop_Out_Rate_By_County", F.col("Total_Dropout") / F.col("Total Population 16 to 19 Years")).drop(*columns_to_drop)
-    df.show()
+    #NAME (type: esriFieldTypeString, alias: Name, SQL Type: sqlTypeOther, length: 255, nullable: true, editable: true)
+    #State (type: esriFieldTypeString, alias: State, SQL Type: sqlTypeOther, length: 255, nullable: true, editable: true)
+    #B19049_001E (type: esriFieldTypeDouble, alias: Median Household Income in past 12 months (inflation-adjusted dollars to last year of 5-year range), SQL Type: sqlTypeOther, nullable: true, editable: true)
+    df = df.select(["County-State", "B19049_001E"])
+    df = df.withColumn("Median-Household-Income", F.col("B19049_001E"))
     
+    df = df.select(["County-State", "Median-Household-Income"])
+    df.show()
+
+
     #Save the new dataframe as a csv
     m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
-    #df.coalesce(1).write.format("text").option("header", "false").mode("append").save(m.group('Path') + "ProcessedDropOutRatesPerCounty") 
-    df.write.option("header", True).csv(m.group('Path') + "ProcessedDropOutRatesPerCounty")
-    
+    #df.write.option("header", True).csv(m.group('Path') + "ProcessedMedianIncomePerCounty")
+    df.coalesce(1).write.option("header", True).csv(m.group('Path') + "ProcessedMedianIncomePerCounty")
 
     spark.stop()

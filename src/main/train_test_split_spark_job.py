@@ -10,6 +10,8 @@ import sys
 import tempfile
 import shutil
 import numpy as np
+import pickle as pkl
+import re
 
 from pyspark.sql import SparkSession
 from pyspark.ml.classification import LogisticRegression
@@ -49,7 +51,7 @@ if __name__ == "__main__":
         print("\n\n!!!!Missing SVI In Columns, exiting\n\n")
         sys.exit(-1)
     
-    input_columns = ["SVI"] 
+    input_columns = ["SVI", "Drop_Out_Rate_By_County", "Graduation-Rate"] 
     output_columns = [col for col in columns if col not in input_columns]    
     
     # print(output_columns)
@@ -74,8 +76,14 @@ if __name__ == "__main__":
 
     train, test = df_reordered.randomSplit([0.8, 0.2], seed=42)
 
+    m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
+
+    test_df = test.rdd.toDF()
+    test_df.show()
+    test_df.write.option("header", True).csv(m.group("Path") + "test03.csv")
+    
     train_rdd = train.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
-    # test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
+    test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
     
 
     # print(train_rdd.take(1))
@@ -86,6 +94,20 @@ if __name__ == "__main__":
 
     nn.train(train_rdd)
     
+    y_test = nn.use(test_rdd)
+    #m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)   
+ 
+    #print(y_test[0])
+    #print("\n\n")
+    #print(test_rdd.map(lambda x: x[n_inputs:]).take(1))
+    #print(type(y_test))     
+    
+    #test_df = test.rdd.toDF()
+    #test_df.write.option("header", True).csv(m.group("Path") + "test01.csv")
+
+    with open("nn03.pkl", 'wb') as nnf:
+        pkl.dump(nn, nnf, pkl.HIGHEST_PROTOCOL) 
+
     print("\n\n!!!DONE!!!\n\n")
     spark.stop()
 
