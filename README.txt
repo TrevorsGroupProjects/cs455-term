@@ -5,9 +5,15 @@ Trevor Holland, Rene Martinez, Griffin Zavadil
 <List of files>
 
 +++Instructions for running files+++
-1) Stage data on cluster (implied: HDFS cluster is up and running)
-2) Submit job to spark (implied: Spark is running on cluster)
+NeuralNetworkPyspark.py is a class used to analyze data from RDDs over the Spark framwork. It is not a file that should be run or submitted, but a library file necessary for further analysis.
 
+train_test_split_spark_job.py is a spark job used for tuning hyper-parameters of the neural network and experimenting on the predictive power of SVI in concert with other data. Ultimately, we stuck with our original hypothesis for developing a model and used only SVI to predict other factors.
+To run: 
+$SPARK_HOME/bin/spark-submit <path to train_test_split_spark_job.py > <hdfs path to merged data file>
+
+predict_from_svi.py is a spark job that will load a pkl stored neural network and evaluate the model stored within the neural network.
+To run:
+$SPARK_HOME/bin/spark-submit <path to predict_from_svi.py > <path to pkl file of neural network> <hdfs path to merged data file>
 
 These Jupyter Notebooks were developed for the sole purpose of downloading and storing data from ArcGIS Online. In order to run these notebooks you must install the ‘arcgis’ python package available from esri (https://developers.arcgis.com/python/guide/install-older-versions/).
 dropout-dpp – Downloads data from ACS Youth School and Work Activity Variables: https://www.arcgis.com/home/item.html?id=5c798c532ad5448ea9e973de8ddf8076 
