@@ -32,25 +32,25 @@ It is highly recommended that each of the above files get staged and processed i
 
 Public School Data:
 *Note: The output files from this spark job will be in a subdirectory of the output directory specified, called "public_school_out"
-$SPARK_HOME/bin/spark-submit <path to public_school_data_spark_job.py> <hostname> <port> <path to input directory> <path to output directory>
+$SPARK_HOME/bin/spark-submit <path to public_school_data_spark_job.py> <hostname> <port> <path to hdfs input directory> <path to hdfs output directory>
 Example:
 $SPARK_HOME/bin/spark-submit ./src/main/public_school_data_spark_job.py breckenridge 41595 /input /output
 
 Private School Data:
 *Note: The output files from this spark job will be in a subdirectory of the output directory specified, called "private_school_out"
-$SPARK_HOME/bin/spark-submit <path to private_school_data_spark_job.py> <hostname> <port> <path to input directory> <path to output directory>
+$SPARK_HOME/bin/spark-submit <path to private_school_data_spark_job.py> <hostname> <port> <path to hdfs input directory> <path to hdfs output directory>
 Example:
 $SPARK_HOME/bin/spark-submit ./src/main/private_school_data_spark_job.py breckenridge 41595 /input /output
 
 SVI Data:
 *Note: The output files from this spark job will be in a subdirectory of the output directory specified, called "svi_out"
-$SPARK_HOME/bin/spark-submit <path to svi_data_spark_job.py> <hostname> <port> <path to input directory> <path to output directory>
+$SPARK_HOME/bin/spark-submit <path to svi_data_spark_job.py> <hostname> <port> <path to hdfs input directory> <path to hdfs output directory>
 Example:
 $SPARK_HOME/bin/spark-submit ./src/main/svi_data_spark_job.py breckenridge 41595 /input /output
 
 Graduation Data:
 *Note: The output files from this spark job will be in a subdirectory of the output directory specified, called "grad_out"
-$SPARK_HOME/bin/spark-submit <path to graduation_data_spark_job.py> <hostname> <port> <path to input directory> <path to output directory>
+$SPARK_HOME/bin/spark-submit <path to graduation_data_spark_job.py> <hostname> <port> <path to hdfs input directory> <path to hdfs output directory>
 Example:
 $SPARK_HOME/bin/spark-submit ./src/main/graduation_data_spark_job.py breckenridge 41595 /input /output
 
