@@ -94,21 +94,24 @@ if __name__ == "__main__":
     mapping_expr = F.create_map([F.lit(x) for x in chain(*state_by_state_postal_codes.items())])
     
     df = df.withColumn("County", F.regexp_replace(F.col("NAME"), 'County', ''))
-    df.show()
+    #df.show()
     
     df = df.withColumn("County-State", F.concat_ws("-", F.upper(F.trim(F.col("County"))), mapping_expr.getItem(F.col("State"))))
-    df.show()
+    #df.show()
     
     #NAME (type: esriFieldTypeString, alias: Name, SQL Type: sqlTypeOther, length: 255, nullable: true, editable: true)
     #State (type: esriFieldTypeString, alias: State, SQL Type: sqlTypeOther, length: 255, nullable: true, editable: true)
     #B19049_001E (type: esriFieldTypeDouble, alias: Median Household Income in past 12 months (inflation-adjusted dollars to last year of 5-year range), SQL Type: sqlTypeOther, nullable: true, editable: true)
-    #columns_to_select("")
+    df = df.select(["County-State", "B19049_001E"])
+    df = df.withColumn("Median-Household-Income", F.col("B19049_001E"))
     
-        
+    df = df.select(["County-State", "Median-Household-Income"])
+    df.show()
+
+
     #Save the new dataframe as a csv
-    #m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
-    #df.coalesce(1).write.format("text").option("header", "false").mode("append").save(m.group('Path') + "ProcessedDropOutRatesPerCounty") 
+    m = re.search(r'(?P<Path>[\w\W+]+\/)', input_path)
     #df.write.option("header", True).csv(m.group('Path') + "ProcessedMedianIncomePerCounty")
-    
+    df.coalesce(1).write.option("header", True).csv(m.group('Path') + "ProcessedMedianIncomePerCounty")
 
     spark.stop()
