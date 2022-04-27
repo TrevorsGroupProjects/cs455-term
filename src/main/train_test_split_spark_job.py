@@ -75,7 +75,7 @@ if __name__ == "__main__":
     train, test = df_reordered.randomSplit([0.8, 0.2], seed=42)
 
     train_rdd = train.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
-    # test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
+    test_rdd = test.rdd.map(lambda x: (np.array([x[:n_inputs]]).astype(np.float), np.array([x[n_inputs:]]).astype(np.float)))
     
 
     # print(train_rdd.take(1))
@@ -85,6 +85,12 @@ if __name__ == "__main__":
     # nn.collectMeansAndStandards(train_rdd, verbose=True)
 
     nn.train(train_rdd)
+    
+    y_test = nn.use(test_rdd)
+    
+    print(y_test[0])
+    print("\n\n")
+    print(test_rdd.map(lambda x: x[n_inputs:]).take(1))
     
     print("\n\n!!!DONE!!!\n\n")
     spark.stop()
