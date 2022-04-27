@@ -2,7 +2,65 @@ Team 6
 Trevor Holland, Rene Martinez, Griffin Zavadil
 
 +++Files+++
-<List of files>
+./data/
+./data/usa_public_schools.zip
+./data/Public_Private_School_Percentages_Per_County.csv
+./data/MergedData.csv
+./data/ProcessedPublicSchools.txt
+./data/TestSetNN03.csv
+./data/PublicSchoolCountByCounty.csv
+./data/usa_total_teens_with_jobs.csv
+./data/usa_drop_out_data.csv
+./data/ProcessedSVIs.csv
+./data/TestSetNN01.csv
+./data/ProcessedPrivateSchools.csv
+./data/usa_median_household_income.csv
+./data/ProcessedSVIData.txt
+./data/ProcessedPercentageOfTeensWithJobsByCounty.csv
+./data/TestSetNN02.csv
+./data/ProcessedPublicSchools.csv
+./data/MedianHouseholdIncomePerCounty.csv
+./data/ProcessedDropOutRatesPerCounty.csv
+./data/PrivateSchoolCountByCounty.csv
+./data/ProcessedPrivateSchools.txt
+./data/ProcessedGraduationRates.txt
+./data/ProcessedGraduationRates.csv
+./data/usa_private_schools.csv
+./nn01
+./nn02
+./nn03
+./nn_svi.pkl
+./preprocessing/
+./preprocessing/public-dpp.ipynb
+./preprocessing/median-household-income.ipynb
+./preprocessing/svi-dpp.ipynb
+./preprocessing/public_private_school_arcgis.ipynb
+./preprocessing/grad-dpp.ipynb
+./preprocessing/dropout-dpp.ipynb
+./preprocessing/private-dpp.ipynb
+./preprocessing/total_teens_with_jobs.ipynb
+./README.md
+./README.txt
+./risk_tract.Colorado.raw_data.json
+./SocialTractDataAnalysis.ipynb
+./src/
+./src/main/
+./src/main/dataset_merging_spark_job.py
+./src/main/svi_data_spark_job.py
+./src/main/public_private_school_percentages_by_county.py
+./src/main/private_school_data_spark_job.py
+./src/main/public_private_school_count_by_county_spark_job.py
+./src/main/train_test_split_spark_job.py
+./src/main/graduation_data_spark_job.py
+./src/main/teens_with_jobs_data_spark_job.py
+./src/main/public_school_data_spark_job.py
+./src/main/__pycache__/
+./src/main/predict_from_svi.py
+./src/main/dropout_data_spark_job.py
+./src/main/median_household_data_spark_job.py
+./src/main/NeuralNetworkPyspark.py
+./svi_tract_GISJOIN.Colorado.raw_data.json
+
 
 +++Instructions for running files+++
 NeuralNetworkPyspark.py is a class used to analyze data from RDDs over the Spark framwork. It is not a file that should be run or submitted, but a library file necessary for further analysis.
