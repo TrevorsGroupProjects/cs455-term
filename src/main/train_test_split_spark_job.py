@@ -126,16 +126,19 @@ if __name__ == "__main__":
     # epochs = [10, 50, 100]
     # networks = [[], [3,10,10], [3,5,5], [3, 5, 10, 10, 5], [3, 5, 10, 10, 10, 10]]
     # act_funcs = ['tanh', 'sig']
-    epochs = [250]
-    networks = [[], [3, 5, 10, 10, 10, 10]]
-    act_funcs = ['tanh']
+    # epochs = [250]
+    # networks = [[], [3, 5, 10, 10, 10, 10]]
+    # act_funcs = ['tanh']
 
-    nn_data = experiment1(train_rdd, test_rdd, epochs, networks, act_funcs)
+    # nn_data = experiment1(train_rdd, test_rdd, epochs, networks, act_funcs)
 
-    print(nn_data)
+    # print(nn_data)
 
-    # with open("nn03.pkl", 'wb') as nnf:
-    #     pkl.dump(nn, nnf, pkl.HIGHEST_PROTOCOL) 
+    nn = npys.NeuralNetworkPyspark(n_inputs, n_outputs, [])
+    nn.train(train_rdd, num_epochs=250)
+
+    with open("nn_svi.pkl", 'wb') as nnf:
+        pkl.dump(nn, nnf, pkl.HIGHEST_PROTOCOL) 
 
     print("\n\n!!!DONE!!!\n\n")
     spark.stop()
