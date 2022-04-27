@@ -135,7 +135,7 @@ if __name__ == "__main__":
     # print(nn_data)
 
     nn = npys.NeuralNetworkPyspark(n_inputs, n_outputs, [])
-    nn.train(train_rdd, num_epochs=250)
+    nn.train(train_rdd, num_epochs=150)
 
     with open("nn_svi.pkl", 'wb') as nnf:
         pkl.dump(nn, nnf, pkl.HIGHEST_PROTOCOL) 
