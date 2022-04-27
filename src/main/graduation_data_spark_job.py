@@ -1,5 +1,4 @@
 import sys
-import pyspark.sql.functions as F
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
@@ -94,7 +93,6 @@ def processGradData(spark, input_folder_path, output_folder):
     df = spark.createDataFrame(rdd, header)
 
     df = df.groupBy('County-State').avg('Graduation-Rate')
-    # df = df.withColumn("Graduation-Rate", F.col("avg(Graduation-Rate)"))
     df = df.select(col("County-State"), col("avg(Graduation-Rate)").alias("Graduation-Rate"))
 
     df = df.repartition(1)
