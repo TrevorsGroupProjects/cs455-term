@@ -207,8 +207,8 @@ class NeuralNetworkPyspark():
         train_rdd = train_rdd.map(lambda x: (self.standardizeX(x[0]), self.standardizeT(x[1]) ))
         print("X and T have been standardized.")
         # History over epochs
-        cost_history = []
-        acc_history = []
+        self.cost_history = []
+        self.acc_history = []
 
         # Epoch Loop (mini batch implementation)
         print("Start Training Loop:")
@@ -233,8 +233,8 @@ class NeuralNetworkPyspark():
             # print(len(gradientCostAcc))
 
             # Add to history
-            cost_history.append(cost)
-            acc_history.append(acc)
+            self.cost_history.append(cost)
+            self.acc_history.append(acc)
 
             # Extract gradients
             r_bias_and_weight =  list(reversed(gradientCostAcc[1:-2]))
@@ -249,7 +249,7 @@ class NeuralNetworkPyspark():
 
             # Display performance
             if verbose:
-                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {cost_history[epoch]} | Error: {acc_history[epoch]} | Batchsize:{n}")
+                print(f"   Epoch {epoch+1}/{num_epochs} | Cost: {self.cost_history[epoch]} | Error: {self.acc_history[epoch]} | Batchsize:{n}")
 
         print("Training end..")
         self.trained = True
